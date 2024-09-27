@@ -1,0 +1,44 @@
+{
+"cate_service": {
+"Energy Usage": {
+"action": "View Data",
+"category": "Low",
+"frequency": "Daily"
+},
+"Notification": {
+"action": "Read Data",
+"category": "Medium",
+"frequency": "Weekly"
+}
+},
+"device": {
+"device_name": "Gauge",
+"device_type": "Smartmetre",
+"device_unprocessed": [
+"Energy Usage",
+"Notification",
+"Temperature"
+]
+},
+"raw_data": {
+"Energy Usage": {
+"action": "Average",
+"frequency": "Daily",
+"sensitivity": "Low"
+},
+"Notification": {
+"action": "Transfer",
+"frequency": "Yearly",
+"sensitivity": "Medium"
+},
+"Temperature": {
+"action": "Upload",
+"frequency": "No fix time",
+"sensitivity": "Medium"
+}
+},
+"service": {
+"service_name": "The8th",
+"service_type": "Advertising Company"
+}
+}
