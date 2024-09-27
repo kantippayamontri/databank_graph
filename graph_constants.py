@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 
 class Device(BaseModel):
+    id:str
     name: str = Field(alias="device_name")
     type: str = Field(alias="device_type")
     unprocessed_data: list[str] = Field(alias="device_unprocessed")
@@ -22,8 +23,8 @@ class RelationData(BaseModel):
     target: str
 
 class Node(BaseModel):
-    data: Data | None 
-    position: Position | None
+    data: Data
+    position: Position
 
 class Relation(BaseModel):
     data: RelationData | None
