@@ -98,11 +98,11 @@ def create_device_graph(
 # TODO: making graph
 from dash import Dash, html
 import dash_cytoscape as cyto
-import tkinter as tk
+# import tkinter as tk
 
 app = Dash(__name__)
 
-root = tk.Tk()
+# root = tk.Tk()
 # screen_width = root.winfo_screenwidth()
 # screen_heigth = root.winfo_screenheight()
 
