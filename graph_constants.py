@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from enum import Enum
 
 
 class Device(BaseModel):
@@ -7,6 +8,14 @@ class Device(BaseModel):
     type: str = Field(alias="device_type")
     unprocessed_data: list[str] = Field(alias="device_unprocessed")
     raw_data: dict[str, dict[str, str]] | None = Field(alias="raw_data")
+
+
+class DeviceEnum(Enum):
+    NAME = "name"
+    TYPE = "type"
+    UNPROCESSED_DATA = "unprocessed_data"
+    CATEGORY = "category"
+
 
 
 device_category_mapping = {
@@ -43,41 +52,34 @@ device_category_mapping = {
     ("Upload", "Yearly", "Medium"): "Protected",
 }
 
-
 class Service(BaseModel): ...
-
 
 class Data(BaseModel):
     id: str
     label: str
 
-
 class Position(BaseModel):
     x: int
     y: int
-
 
 # class RelationData(BaseModel):
 #     source: str
 #     target: str
 
-
 class GraphNode(BaseModel):
     data: Data
     position: Position
 
-
 # class Relation(BaseModel):
 #     data: RelationData | None
 
-
 class Node:
-    def __init__(self, id: str, label: str):
+    def __init__(self, id: str, label: str, node_type: DeviceEnum):
         self.id: str = id
         self.label: str = label
         self.children: list[Node] | None = []
         self.parent: list[Node] = []
-
+        self.node_type: DeviceEnum = node_type 
 
 class GraphTree:
     def __init__(self, root: Node):

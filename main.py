@@ -90,12 +90,12 @@ def create_device_tree(device: Device | None):
 
     # Create Tree and add device node
     tree = GraphTree(
-        root=Node(id=str("d_" + device.id).replace(" ", "_"), label=device.name)
+        root=Node(id=str("d_" + device.id).replace(" ", "_"), label=device.name, node_type=DeviceEnum.NAME)
     )
     root = tree.get_root()
     # Create Device type Node
     if device.type is not None:
-        device_type_node = Node(id="dt_" + device.type, label=device.type)
+        device_type_node = Node(id="dt_" + device.type, label=device.type, node_type=DeviceEnum.)
         current_node = tree.add_child(parent_node=root, child_node=device_type_node)
 
     device_type_node_temp = current_node  # for separate unprocessed data branch
