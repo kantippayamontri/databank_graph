@@ -95,7 +95,7 @@ def create_device_tree(device: Device | None):
     root = tree.get_root()
     # Create Device type Node
     if device.type is not None:
-        device_type_node = Node(id="dt_" + device.type, label=device.type, node_type=DeviceEnum.)
+        device_type_node = Node(id="dt_" + device.type, label=device.type, node_type=DeviceEnum.TYPE)
         current_node = tree.add_child(parent_node=root, child_node=device_type_node)
 
     device_type_node_temp = current_node  # for separate unprocessed data branch
@@ -103,7 +103,7 @@ def create_device_tree(device: Device | None):
     # Create Device unprocessed Node
     if device.unprocessed_data is not None:
         for _un in device.unprocessed_data:
-            un_processed_node = Node(id="un_" + _un, label=_un)
+            un_processed_node = Node(id="un_" + _un, label=_un, node_type=DeviceEnum.UNPROCESSED_DATA)
             current_node = tree.add_child(
                 parent_node=device_type_node_temp, child_node=un_processed_node
             )
@@ -122,19 +122,26 @@ def create_device_tree(device: Device | None):
                         device.raw_data[_un]["sensitivity"],
                     )
                 ]
-                sensitivity_node = Node(id="sen_" + sensitivity, label=sensitivity)
+                sensitivity_node = Node(id="sen_" + sensitivity, label=sensitivity, node_type=DeviceEnum.SENSITIVITY)
                 current_node = tree.add_child(parent_node=current_node, child_node=sensitivity_node)
 
                 # Create action node
                 action = device.raw_data[_un]["action"]
-                action_node = Node(id="at_" + action, label=action)
-                current_node = tree.add_child(
-                    parent_node=current_node, child_node=action_node
-                )
+                action_node = Node(id="at_" + action, label=action, node_type=DeviceEnum.ACTION)
 
                 # Create action unprocessed node #TODO: orange node
                 action_unprocessed = action + "_" + _un
-                action_unprocessed_node = Node(id="atun_" + action_unprocessed, label=action_unprocessed.replace("_", "/n"))
+                action_unprocessed_node = Node(id="atun_" + action_unprocessed, label=action_unprocessed.replace("_", "_"), node_type=DeviceEnum.ACTION_UNPROCESSED)
+
+                current_node: list[Node] = tree.add_mul_child(parent_node=current_node, child_node=[action_node, action_unprocessed_node]) # return multiple child node
+
+                # Create sensitivity action
+                sensitivity_action = sensitivity + "_" + action
+                sensitivity_action_node = Node(id="senat_" + sensitivity_action, label=sensitivity_action, node_type=DeviceEnum.SENSITIVITY_ACTION)
+
+                current_node = tree.add_child_mul_parent(parent_node = current_node, child_node=sensitivity_action_node)
+                
+
 
 
     # print(tree._print_tree_recursive(node=current_node_temp))
