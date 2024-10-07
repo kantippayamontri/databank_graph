@@ -140,7 +140,7 @@ def create_device_tree(device: Device | None):
                 sensitivity_action_node = Node(id="senat_" + sensitivity_action, label=sensitivity_action, node_type=DeviceEnum.SENSITIVITY_ACTION)
 
                 current_node = tree.add_child_mul_parent(parent_node = current_node, child_node=sensitivity_action_node)
-                
+
 
 
 
@@ -193,39 +193,33 @@ if devices is not None:
     device with unprocessed and raw_data = #unprocessed * (4.5)
     space = (2 + (#device -1)) / 2
     """
-    number_slot = 0
-    number_slot += (2 + len(devices) - 1) / 2.0  # for space
-    for device in devices:
-        # check device has unprocessed data
-        if len(device.unprocessed_data) > 0:
-            # check has raw_data or not
-            if device.raw_data is None:  # found only unprocessed
-                number_slot += len(device.unprocessed_data) * 2
-            else:
-                number_slot += len(device.unprocessed_data) * 4.5
 
-    slot = screen_heigth // int(number_slot + 0.5)  # ceil the slot number
-    hslot = int(slot / 2)
+    screen_width_ratio = screen_height_ratio = 100
+    each_device_width = (screen_width_ratio / len(devices)) * device_screen_width
+    ic(each_device_width)
+    
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+    
+    # number_slot = 0
+    # number_slot += (2 + len(devices) - 1) / 2.0  # for space
+    # for device in devices:
+    #     # check device has unprocessed data
+    #     if len(device.unprocessed_data) > 0:
+    #         # check has raw_data or not
+    #         if device.raw_data is None:  # found only unprocessed
+    #             number_slot += len(device.unprocessed_data) * 2
+    #         else:
+    #             number_slot += len(device.unprocessed_data) * 4.5
 
-    # ic(f"number slot: {number_slot}")
-    # ic(f"slot: {slot}")
-    # ic(f"hslot: {hslot}")
+    # slot = screen_heigth // int(number_slot + 0.5)  # ceil the slot number
+    # hslot = int(slot / 2)
 
-    h_now = hslot
+    # h_now = hslot
     for index, device in enumerate(devices):
-        # ic(device.model_dump())
-        # devide screen height for each node
-        # device_node = create_device_graph(device, start_h=h_now, slot_h=slot, hslot_h=slot)
         # TODO: create device tree
         device_tree = create_device_tree(device=device)
         device_tree.print_tree(show_id=True, show_level=True)
         # h_now += 200 # for debug
-
-        # if device_node is not None:
-        #     for ele in device_node:
-        #         ic(ele.model_dump_json())
-        #         device_graph_list.append(ele.model_dump())
-        #     # exit()  # FIXME: remove this
 
 ic(screen_width, screen_heigth)
 
