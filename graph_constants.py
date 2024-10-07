@@ -146,6 +146,15 @@ class GraphTree:
 
             node.id = f"{parent_id}_{node.id}".replace(" ", "_")
         return node
+    
+    def gen_data_visual(self,start_node: Node = None):
+
+        if start_node is None: #start from root
+            start_node = self.root
+        
+        
+        
+        return []
 
     def print_tree(self, show_id=False, show_level=False):
         self._print_tree_recursive(

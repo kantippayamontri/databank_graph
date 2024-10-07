@@ -170,7 +170,7 @@ screen_width = 2000
 screen_heigth = 2000
 
 device_screen_width = service_screen_width = int(screen_width / 2)
-device_screen_heigth = service_screen_heigth = int(screen_heigth / 2)
+device_screen_height = service_screen_heigth = int(screen_heigth / 2)
 
 devices, services = create_elements(data)
 if devices:
@@ -194,11 +194,9 @@ if devices is not None:
     space = (2 + (#device -1)) / 2
     """
 
-    screen_width_ratio = screen_height_ratio = 100
-    each_device_width = (screen_width_ratio / len(devices)) * device_screen_width
-    ic(each_device_width)
-    
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+    screen_width_ratio = screen_height_ratio = 1.0
+    each_device_height = (screen_height_ratio / len(devices)) * device_screen_height
+    each_device_width = screen_width_ratio * device_screen_width
     
     # number_slot = 0
     # number_slot += (2 + len(devices) - 1) / 2.0  # for space
@@ -219,6 +217,8 @@ if devices is not None:
         # TODO: create device tree
         device_tree = create_device_tree(device=device)
         device_tree.print_tree(show_id=True, show_level=True)
+
+        
         # h_now += 200 # for debug
 
 ic(screen_width, screen_heigth)
