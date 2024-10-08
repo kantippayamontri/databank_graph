@@ -213,34 +213,31 @@ if services:
 device_graph_list = []
 if devices is not None:
 
-    # count number of mini-slot of each device
-    """
-    device with unprocessed = #unprocessed * 2
-    device with unprocessed and raw_data = #unprocessed * (4.5)
-    space = (2 + (#device -1)) / 2
-    """
-
     screen_width_ratio = screen_height_ratio = 1.0
-    each_device_height = (screen_height_ratio / len(devices)) * device_screen_height
+    each_device_height = int((screen_height_ratio / len(devices)) * device_screen_height)
     each_device_width = screen_width_ratio * device_screen_width
 
+    device_tree_list = []
     for index, device in enumerate(devices):
         # TODO: create device tree
         device_tree = create_device_tree(device=device)
+        ic(device_tree.max_depth(node=device_tree.root))
+        device_tree_list.append(device_tree)
+    
+    for _device_tree in device_tree_list:
+        ...
 
-        device_width_slot = int(each_device_width / device_tree.max_depth(node=device_tree.root))
-        device_height_slot = int(each_device_height)
+        # device_width_slot = int(each_device_width / device_tree.max_depth(node=device_tree.root))
+        # device_height_slot = int(each_device_height)
 
-        device_tree.print_tree(show_id=False, show_level=True)
-        device_graph_list = device_tree.gen_data_visual(
-            start_node=device_tree.root,
-            top_x=0,
-            top_y=(index * each_device_height),
-            # screen_width=each_device_width,
-            # screen_height=each_device_height,
-            width_slot = device_width_slot,
-            height_slot = device_height_slot,
-        )
+        # device_tree.print_tree(show_id=False, show_level=True)
+        # device_graph_list = device_tree.gen_data_visual(
+        #     start_node=device_tree.root,
+        #     top_x=0,
+        #     top_y=(index * each_device_height),
+        #     width_slot = device_width_slot,
+        #     height_slot = device_height_slot,
+        # )
 
 # ic(screen_width, screen_heigth)
 

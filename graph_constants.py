@@ -20,6 +20,8 @@ class DeviceEnum(Enum):
     ACTION_UNPROCESSED = "action_unprocessed"
     SENSITIVITY_ACTION = "sensitivity_action"
 
+class HomeEnum(Enum):
+    NAME = "id"
 
 device_category_mapping = {
     ("Average", "Daily", "Low"): "Private",
@@ -89,7 +91,7 @@ class Node:
         self.label: str = label
         self.children: list[Node] | None = []
         self.parent: list[Node] = []
-        self.node_type: DeviceEnum = node_type
+        self.node_type: DeviceEnum | HomeEnum = node_type
 
 
 class GraphTree:
@@ -146,8 +148,8 @@ class GraphTree:
 
             node.id = f"{parent_id}_{node.id}".replace(" ", "_")
         return node
-    
-    def max_depth(self,node: Node) -> int:
+
+    def max_depth(self, node: Node) -> int:
         if node is None:
             return 0
         elif len(node.children) == 0:
@@ -161,8 +163,8 @@ class GraphTree:
         top_y: int,
         # screen_width: int,
         # screen_height: int,
-        width_slot:int,
-        height_slot:int,
+        width_slot: int,
+        height_slot: int,
         start_node: Node = None,
         data_visual_list: list = [],
     ):
@@ -187,18 +189,24 @@ class GraphTree:
                 new_width_slot = width_slot
 
                 for index, child in enumerate(start_node.children):
-                    data_visual_list.append(
-                        self.gen_data_visual(
-                            top_x= ((index+1) * new_height_slot) + top_x,
-                            top_y= ((index + 1) * new_width_slot) + top_y,
-                            width_slot=new_width_slot,
-                            height_slot=new_height_slot,
-                            start_node=child,
-                            data_visual_list=data_visual_list
-                        )
+                    # check the same parent
+
+                    
+                    
+                    child_dict = self.gen_data_visual(
+                        top_x=top_x + new_width_slot,
+                        top_y=top_y + (index * new_height_slot),
+                        width_slot=new_width_slot,
+                        height_slot=new_height_slot,
+                        start_node=child,
+                        data_visual_list=data_visual_list,
                     )
 
-        return data_visual_list
+                    if child_dict is not None:
+                        data_visual_list.append(child_dict)
+
+            if start_node.id == self.root.id:
+                return data_visual_list
 
     # def
 
@@ -237,3 +245,17 @@ class GraphTree:
             self._print_tree_recursive(
                 node=child, level=level + 1, show_id=show_id, show_level=show_level
             )
+
+class DeviceTree:
+    home_id: str
+    home_label: str
+    devices: list[Device] = []
+
+    def merge_device_tree(self) -> GraphTree:
+        # Create Home Node 
+        home_node = Node(id="H_0", label="My home",parent=[], node_type=HomeEnum.ID)
+        
+        # Create Device Node for each device
+        
+        
+        return None
