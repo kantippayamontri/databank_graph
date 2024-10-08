@@ -223,47 +223,34 @@ if devices is not None:
     screen_width_ratio = screen_height_ratio = 1.0
     each_device_height = (screen_height_ratio / len(devices)) * device_screen_height
     each_device_width = screen_width_ratio * device_screen_width
-    ic(each_device_height, each_device_width)
 
-    # number_slot = 0
-    # number_slot += (2 + len(devices) - 1) / 2.0  # for space
-    # for device in devices:
-    #     # check device has unprocessed data
-    #     if len(device.unprocessed_data) > 0:
-    #         # check has raw_data or not
-    #         if device.raw_data is None:  # found only unprocessed
-    #             number_slot += len(device.unprocessed_data) * 2
-    #         else:
-    #             number_slot += len(device.unprocessed_data) * 4.5
-
-    # slot = screen_heigth // int(number_slot + 0.5)  # ceil the slot number
-    # hslot = int(slot / 2)
-
-    # h_now = hslot
     for index, device in enumerate(devices):
         # TODO: create device tree
         device_tree = create_device_tree(device=device)
-        ic(device_tree.max_depth(node=device_tree.root))
-        device_tree.print_tree(show_id=True, show_level=True)
+
+        device_width_slot = int(each_device_width / device_tree.max_depth(node=device_tree.root))
+        device_height_slot = int(each_device_height)
+
+        device_tree.print_tree(show_id=False, show_level=True)
         device_graph_list = device_tree.gen_data_visual(
             start_node=device_tree.root,
             top_x=0,
             top_y=(index * each_device_height),
-            screen_width=each_device_width,
-            screen_height=each_device_height,
+            # screen_width=each_device_width,
+            # screen_height=each_device_height,
+            width_slot = device_width_slot,
+            height_slot = device_height_slot,
         )
-
-        # device_tree.
-
-        # h_now += 200 # for debug
 
 # ic(screen_width, screen_heigth)
 
-device_graph_list = [
-    {"data": {"id": "one", "label": "Node 1"}, "position": {"x": 75, "y": 75}},
-    {"data": {"id": "two", "label": "Node 2"}, "position": {"x": 200, "y": 200}},
-    {"data": {"source": "one", "target": "two"}},
-]
+# device_graph_list = [
+#     {"data": {"id": "one", "label": "Node 1"}, "position": {"x": 75, "y": 75}},
+#     {"data": {"id": "two", "label": "Node 2"}, "position": {"x": 200, "y": 200}},
+#     {"data": {"source": "one", "target": "two"}},
+# ]
+
+ic(device_graph_list)
 
 app.layout = html.Div(
     [

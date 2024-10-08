@@ -159,13 +159,15 @@ class GraphTree:
         self,
         top_x: int,
         top_y: int,
-        screen_width: int,
-        screen_height: int,
+        # screen_width: int,
+        # screen_height: int,
+        width_slot:int,
+        height_slot:int,
         start_node: Node = None,
         data_visual_list: list = [],
     ):
 
-        ic(top_x, top_y, screen_width, screen_height)
+        # ic(top_x, top_y, width_slot, height_slot)
 
         if start_node is not None:
 
@@ -173,23 +175,28 @@ class GraphTree:
                 self.create_node_visual(
                     id=start_node.id,
                     label=start_node.label,
-                    x=top_x + int(screen_width / 2),
-                    y=top_y + int(screen_height / 2),
+                    x=top_x + int(width_slot / 2),
+                    y=top_y + int(height_slot / 2),
                 )
             )  # append own node
 
-            # number_child = len(start_node.children)
-            # if number_child > 0:  # go to children node
-            #     # calculate the height slot of each child node
-            #     height_slot = screen_height / number_child
+            number_child = len(start_node.children)
+            if number_child > 0:  # go to children node
+                # calculate the height slot of each child node
+                new_height_slot = height_slot / number_child
+                new_width_slot = width_slot
 
-            #     for index, child in enumerate(start_node.children):
-            #         data_visual_list.append(
-            #             self.gen_data_visual(
-            #                 # top_x=,
-            #                 # top_y=,
-            #             )
-            #         )
+                for index, child in enumerate(start_node.children):
+                    data_visual_list.append(
+                        self.gen_data_visual(
+                            top_x= ((index+1) * new_height_slot) + top_x,
+                            top_y= ((index + 1) * new_width_slot) + top_y,
+                            width_slot=new_width_slot,
+                            height_slot=new_height_slot,
+                            start_node=child,
+                            data_visual_list=data_visual_list
+                        )
+                    )
 
         return data_visual_list
 
