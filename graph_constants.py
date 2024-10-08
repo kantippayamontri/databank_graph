@@ -133,7 +133,7 @@ class GraphTree:
         id_list = list([x.id for x in node.children])
         return id_list
 
-    def get_parent_id(self,node: Node):
+    def get_parent_id(self, node: Node):
         id_list = list([x.id for x in node.parent])
         return id_list
 
@@ -147,14 +147,64 @@ class GraphTree:
             node.id = f"{parent_id}_{node.id}".replace(" ", "_")
         return node
     
-    def gen_data_visual(self,start_node: Node = None):
+    def max_depth(self,node: Node) -> int:
+        if node is None:
+            return 0
+        elif len(node.children) == 0:
+            return 1
+        else:
+            return 1 + max(self.max_depth(child) for child in node.children)
 
-        if start_node is None: #start from root
-            start_node = self.root
-        
-        
-        
-        return []
+    def gen_data_visual(
+        self,
+        top_x: int,
+        top_y: int,
+        screen_width: int,
+        screen_height: int,
+        start_node: Node = None,
+        data_visual_list: list = [],
+    ):
+
+        ic(top_x, top_y, screen_width, screen_height)
+
+        if start_node is not None:
+
+            data_visual_list.append(
+                self.create_node_visual(
+                    id=start_node.id,
+                    label=start_node.label,
+                    x=top_x + int(screen_width / 2),
+                    y=top_y + int(screen_height / 2),
+                )
+            )  # append own node
+
+            # number_child = len(start_node.children)
+            # if number_child > 0:  # go to children node
+            #     # calculate the height slot of each child node
+            #     height_slot = screen_height / number_child
+
+            #     for index, child in enumerate(start_node.children):
+            #         data_visual_list.append(
+            #             self.gen_data_visual(
+            #                 # top_x=,
+            #                 # top_y=,
+            #             )
+            #         )
+
+        return data_visual_list
+
+    # def
+
+    def create_node_visual(self, id: str, label: str, x: int, y: int):
+        return {
+            "data": {"id": id, "label": label},
+            "position": {"x": x, "y": y},
+        }
+
+    def create_relation_visual(self, source: str, target: str):
+        return {
+            "data": {"source": source, "target": target},
+        }
 
     def print_tree(self, show_id=False, show_level=False):
         self._print_tree_recursive(

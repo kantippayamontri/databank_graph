@@ -90,12 +90,18 @@ def create_device_tree(device: Device | None):
 
     # Create Tree and add device node
     tree = GraphTree(
-        root=Node(id=str("d_" + device.id).replace(" ", "_"), label=device.name, node_type=DeviceEnum.NAME)
+        root=Node(
+            id=str("d_" + device.id).replace(" ", "_"),
+            label=device.name,
+            node_type=DeviceEnum.NAME,
+        )
     )
     root = tree.get_root()
     # Create Device type Node
     if device.type is not None:
-        device_type_node = Node(id="dt_" + device.type, label=device.type, node_type=DeviceEnum.TYPE)
+        device_type_node = Node(
+            id="dt_" + device.type, label=device.type, node_type=DeviceEnum.TYPE
+        )
         current_node = tree.add_child(parent_node=root, child_node=device_type_node)
 
     device_type_node_temp = current_node  # for separate unprocessed data branch
@@ -103,7 +109,9 @@ def create_device_tree(device: Device | None):
     # Create Device unprocessed Node
     if device.unprocessed_data is not None:
         for _un in device.unprocessed_data:
-            un_processed_node = Node(id="un_" + _un, label=_un, node_type=DeviceEnum.UNPROCESSED_DATA)
+            un_processed_node = Node(
+                id="un_" + _un, label=_un, node_type=DeviceEnum.UNPROCESSED_DATA
+            )
             current_node = tree.add_child(
                 parent_node=device_type_node_temp, child_node=un_processed_node
             )
@@ -122,27 +130,45 @@ def create_device_tree(device: Device | None):
                         device.raw_data[_un]["sensitivity"],
                     )
                 ]
-                sensitivity_node = Node(id="sen_" + sensitivity, label=sensitivity, node_type=DeviceEnum.SENSITIVITY)
-                current_node = tree.add_child(parent_node=current_node, child_node=sensitivity_node)
+                sensitivity_node = Node(
+                    id="sen_" + sensitivity,
+                    label=sensitivity,
+                    node_type=DeviceEnum.SENSITIVITY,
+                )
+                current_node = tree.add_child(
+                    parent_node=current_node, child_node=sensitivity_node
+                )
 
                 # Create action node
                 action = device.raw_data[_un]["action"]
-                action_node = Node(id="at_" + action, label=action, node_type=DeviceEnum.ACTION)
+                action_node = Node(
+                    id="at_" + action, label=action, node_type=DeviceEnum.ACTION
+                )
 
                 # Create action unprocessed node #TODO: orange node
                 action_unprocessed = action + "_" + _un
-                action_unprocessed_node = Node(id="atun_" + action_unprocessed, label=action_unprocessed.replace("_", "_"), node_type=DeviceEnum.ACTION_UNPROCESSED)
+                action_unprocessed_node = Node(
+                    id="atun_" + action_unprocessed,
+                    label=action_unprocessed.replace("_", "_"),
+                    node_type=DeviceEnum.ACTION_UNPROCESSED,
+                )
 
-                current_node: list[Node] = tree.add_mul_child(parent_node=current_node, child_node=[action_node, action_unprocessed_node]) # return multiple child node
+                current_node: list[Node] = tree.add_mul_child(
+                    parent_node=current_node,
+                    child_node=[action_node, action_unprocessed_node],
+                )  # return multiple child node
 
                 # Create sensitivity action
                 sensitivity_action = sensitivity + "_" + action
-                sensitivity_action_node = Node(id="senat_" + sensitivity_action, label=sensitivity_action, node_type=DeviceEnum.SENSITIVITY_ACTION)
+                sensitivity_action_node = Node(
+                    id="senat_" + sensitivity_action,
+                    label=sensitivity_action,
+                    node_type=DeviceEnum.SENSITIVITY_ACTION,
+                )
 
-                current_node = tree.add_child_mul_parent(parent_node = current_node, child_node=sensitivity_action_node)
-
-
-
+                current_node = tree.add_child_mul_parent(
+                    parent_node=current_node, child_node=sensitivity_action_node
+                )
 
     # print(tree._print_tree_recursive(node=current_node_temp))
 
@@ -170,7 +196,7 @@ screen_width = 2000
 screen_heigth = 2000
 
 device_screen_width = service_screen_width = int(screen_width / 2)
-device_screen_height = service_screen_heigth = int(screen_heigth / 2)
+device_screen_height = service_screen_heigth = screen_heigth
 
 devices, services = create_elements(data)
 if devices:
@@ -197,7 +223,8 @@ if devices is not None:
     screen_width_ratio = screen_height_ratio = 1.0
     each_device_height = (screen_height_ratio / len(devices)) * device_screen_height
     each_device_width = screen_width_ratio * device_screen_width
-    
+    ic(each_device_height, each_device_width)
+
     # number_slot = 0
     # number_slot += (2 + len(devices) - 1) / 2.0  # for space
     # for device in devices:
@@ -216,12 +243,27 @@ if devices is not None:
     for index, device in enumerate(devices):
         # TODO: create device tree
         device_tree = create_device_tree(device=device)
+        ic(device_tree.max_depth(node=device_tree.root))
         device_tree.print_tree(show_id=True, show_level=True)
+        device_graph_list = device_tree.gen_data_visual(
+            start_node=device_tree.root,
+            top_x=0,
+            top_y=(index * each_device_height),
+            screen_width=each_device_width,
+            screen_height=each_device_height,
+        )
 
-        
+        # device_tree.
+
         # h_now += 200 # for debug
 
-ic(screen_width, screen_heigth)
+# ic(screen_width, screen_heigth)
+
+device_graph_list = [
+    {"data": {"id": "one", "label": "Node 1"}, "position": {"x": 75, "y": 75}},
+    {"data": {"id": "two", "label": "Node 2"}, "position": {"x": 200, "y": 200}},
+    {"data": {"source": "one", "target": "two"}},
+]
 
 app.layout = html.Div(
     [
