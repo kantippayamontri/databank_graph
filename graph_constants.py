@@ -21,7 +21,7 @@ class DeviceEnum(Enum):
     SENSITIVITY_ACTION = "sensitivity_action"
 
 class HomeEnum(Enum):
-    NAME = "id"
+    ID = "id"
 
 device_category_mapping = {
     ("Average", "Daily", "Low"): "Private",
@@ -86,7 +86,7 @@ class GraphNode(BaseModel):
 
 
 class Node:
-    def __init__(self, id: str, label: str, node_type: DeviceEnum):
+    def __init__(self, id: str, label: str, node_type: DeviceEnum | HomeEnum):
         self.id: str = id
         self.label: str = label
         self.children: list[Node] | None = []
@@ -247,15 +247,114 @@ class GraphTree:
             )
 
 class DeviceTree:
-    home_id: str
-    home_label: str
-    devices: list[Device] = []
+    def __init__(self, home_id:str, home_label:str, devices:list[Device]):
+        self.home_id: str=home_id
+        self.home_label: str = home_label
+        self.devices: list[Device] = devices
+    
+    def get_tree(self,) -> GraphTree:
+        home_tree = self.merge_device_tree()
+        return home_tree
 
     def merge_device_tree(self) -> GraphTree:
         # Create Home Node 
-        home_node = Node(id="H_0", label="My home",parent=[], node_type=HomeEnum.ID)
+        home_node = Node(id=self.home_id, label=self.home_label, node_type=HomeEnum.ID)
+        home_tree = GraphTree(root=home_node)
         
         # Create Device Node for each device
+        for _device in self.devices:
+            device_tree: GraphTree = create_device_tree(device=_device)
+            home_tree.add_child(parent_node=home_tree.get_root(), child_node=device_tree)
         
+        home_tree.print_tree(show_id=False, show_level=True)
         
+        return home_tree
+
+def create_device_tree(device: Device | None):
+    # ic(device.model_dump())
+    if device is None:
         return None
+
+    # Create Tree and add device node
+    tree = GraphTree(
+        root=Node(
+            id=str("d_" + device.id).replace(" ", "_"),
+            label=device.name,
+            node_type=DeviceEnum.NAME,
+        )
+    )
+    root = tree.get_root()
+    # Create Device type Node
+    if device.type is not None:
+        device_type_node = Node(
+            id="dt_" + device.type, label=device.type, node_type=DeviceEnum.TYPE
+        )
+        current_node = tree.add_child(parent_node=root, child_node=device_type_node)
+
+    device_type_node_temp = current_node  # for separate unprocessed data branch
+
+    # Create Device unprocessed Node
+    if device.unprocessed_data is not None:
+        for _un in device.unprocessed_data:
+            un_processed_node = Node(
+                id="un_" + _un, label=_un, node_type=DeviceEnum.UNPROCESSED_DATA
+            )
+            current_node = tree.add_child(
+                parent_node=device_type_node_temp, child_node=un_processed_node
+            )
+
+            # Create raw data
+            if device.raw_data is None:
+                continue
+
+            if _un in device.raw_data.keys():  # found raw data
+
+                # Create category -> sensitivity node
+                sensitivity = device_category_mapping[
+                    (
+                        device.raw_data[_un]["action"],
+                        device.raw_data[_un]["frequency"],
+                        device.raw_data[_un]["sensitivity"],
+                    )
+                ]
+                sensitivity_node = Node(
+                    id="sen_" + sensitivity,
+                    label=sensitivity,
+                    node_type=DeviceEnum.SENSITIVITY,
+                )
+                current_node = tree.add_child(
+                    parent_node=current_node, child_node=sensitivity_node
+                )
+
+                # Create action node
+                action = device.raw_data[_un]["action"]
+                action_node = Node(
+                    id="at_" + action, label=action, node_type=DeviceEnum.ACTION
+                )
+
+                # Create action unprocessed node #TODO: orange node
+                action_unprocessed = action + "_" + _un
+                action_unprocessed_node = Node(
+                    id="atun_" + action_unprocessed,
+                    label=action_unprocessed.replace("_", "_"),
+                    node_type=DeviceEnum.ACTION_UNPROCESSED,
+                )
+
+                current_node: list[Node] = tree.add_mul_child(
+                    parent_node=current_node,
+                    child_node=[action_node, action_unprocessed_node],
+                )  # return multiple child node
+
+                # Create sensitivity action
+                sensitivity_action = sensitivity + "_" + action
+                sensitivity_action_node = Node(
+                    id="senat_" + sensitivity_action,
+                    label=sensitivity_action,
+                    node_type=DeviceEnum.SENSITIVITY_ACTION,
+                )
+
+                current_node = tree.add_child_mul_parent(
+                    parent_node=current_node, child_node=sensitivity_action_node
+                )
+
+    return tree

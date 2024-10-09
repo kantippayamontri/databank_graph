@@ -83,103 +83,6 @@ def create_elements(
 #     return device_node_relation_list
 
 
-def create_device_tree(device: Device | None):
-    # ic(device.model_dump())
-    if device is None:
-        return None
-
-    # Create Tree and add device node
-    tree = GraphTree(
-        root=Node(
-            id=str("d_" + device.id).replace(" ", "_"),
-            label=device.name,
-            node_type=DeviceEnum.NAME,
-        )
-    )
-    root = tree.get_root()
-    # Create Device type Node
-    if device.type is not None:
-        device_type_node = Node(
-            id="dt_" + device.type, label=device.type, node_type=DeviceEnum.TYPE
-        )
-        current_node = tree.add_child(parent_node=root, child_node=device_type_node)
-
-    device_type_node_temp = current_node  # for separate unprocessed data branch
-
-    # Create Device unprocessed Node
-    if device.unprocessed_data is not None:
-        for _un in device.unprocessed_data:
-            un_processed_node = Node(
-                id="un_" + _un, label=_un, node_type=DeviceEnum.UNPROCESSED_DATA
-            )
-            current_node = tree.add_child(
-                parent_node=device_type_node_temp, child_node=un_processed_node
-            )
-
-            # Create raw data
-            if device.raw_data is None:
-                continue
-
-            if _un in device.raw_data.keys():  # found raw data
-
-                # Create category -> sensitivity node
-                sensitivity = device_category_mapping[
-                    (
-                        device.raw_data[_un]["action"],
-                        device.raw_data[_un]["frequency"],
-                        device.raw_data[_un]["sensitivity"],
-                    )
-                ]
-                sensitivity_node = Node(
-                    id="sen_" + sensitivity,
-                    label=sensitivity,
-                    node_type=DeviceEnum.SENSITIVITY,
-                )
-                current_node = tree.add_child(
-                    parent_node=current_node, child_node=sensitivity_node
-                )
-
-                # Create action node
-                action = device.raw_data[_un]["action"]
-                action_node = Node(
-                    id="at_" + action, label=action, node_type=DeviceEnum.ACTION
-                )
-
-                # Create action unprocessed node #TODO: orange node
-                action_unprocessed = action + "_" + _un
-                action_unprocessed_node = Node(
-                    id="atun_" + action_unprocessed,
-                    label=action_unprocessed.replace("_", "_"),
-                    node_type=DeviceEnum.ACTION_UNPROCESSED,
-                )
-
-                current_node: list[Node] = tree.add_mul_child(
-                    parent_node=current_node,
-                    child_node=[action_node, action_unprocessed_node],
-                )  # return multiple child node
-
-                # Create sensitivity action
-                sensitivity_action = sensitivity + "_" + action
-                sensitivity_action_node = Node(
-                    id="senat_" + sensitivity_action,
-                    label=sensitivity_action,
-                    node_type=DeviceEnum.SENSITIVITY_ACTION,
-                )
-
-                current_node = tree.add_child_mul_parent(
-                    parent_node=current_node, child_node=sensitivity_action_node
-                )
-
-    # print(tree._print_tree_recursive(node=current_node_temp))
-
-    # if current_node is not None:
-    #     if device.unprocessed_data:
-    #         for _un in device.unprocessed_data:
-    #             unprocess_node =
-
-    return tree
-
-
 # TODO: making graph
 from dash import Dash, html
 import dash_cytoscape as cyto
@@ -217,15 +120,24 @@ if devices is not None:
     each_device_height = int((screen_height_ratio / len(devices)) * device_screen_height)
     each_device_width = screen_width_ratio * device_screen_width
 
-    device_tree_list = []
-    for index, device in enumerate(devices):
-        # TODO: create device tree
-        device_tree = create_device_tree(device=device)
-        ic(device_tree.max_depth(node=device_tree.root))
-        device_tree_list.append(device_tree)
+    # Create Home Tree
+    home_tree = DeviceTree(
+        home_id="h_0",
+        home_label="Home",
+        devices=devices
+    )
     
-    for _device_tree in device_tree_list:
-        ...
+    ic(home_tree.get_tree().max_depth())
+
+    # device_tree_list = []
+    # for index, device in enumerate(devices):
+    #     # TODO: create device tree
+    #     device_tree = create_device_tree(device=device)
+    #     ic(device_tree.max_depth(node=device_tree.root))
+    #     device_tree_list.append(device_tree)
+    
+    # for _device_tree in device_tree_list:
+    #     ...
 
         # device_width_slot = int(each_device_width / device_tree.max_depth(node=device_tree.root))
         # device_height_slot = int(each_device_height)
