@@ -32,7 +32,7 @@ def create_elements(
 
 
 # TODO: making graph
-from dash import Dash, html
+from dash import Dash, html, Input, Output, callback, no_update
 import dash_cytoscape as cyto
 
 app = Dash(__name__)
@@ -56,9 +56,10 @@ if services:
 
 # prepare node for device
 device_graph_list = []
+screen_width_ratio = screen_height_ratio = 1.0
+
 if devices is not None:
 
-    screen_width_ratio = screen_height_ratio = 1.0
     each_device_height = int(
         (screen_height_ratio / len(devices)) * device_screen_height
     )
@@ -81,23 +82,34 @@ device_graph_list = home_tree.gen_data_visual_home(
 
 ic(device_graph_list)
 
+# prepare node for service
+service_graph_list = []
+if services is not None:
+    each_service_height = int((screen_height_ratio / len(services)) * service_screen_heigth)
+    each_service_width = screen_width_ratio * service_screen_width
+
+
 app.layout = html.Div(
     [
+        html.P(id="tapNode"),
+        html.P(id="tapEdge"),
+        html.P(id="mouseOverNode"),
+        html.P(id="mouseOverEdge"),
         cyto.Cytoscape(
             id="databank-graph",
             layout={"name": "preset"},
             style={
-                "width":str(screen_width) + "px",
-                "height":str(screen_heigth) + "px",
+                "width": str(screen_width) + "px",
+                "height": str(screen_heigth) + "px",
             },
             elements=device_graph_list,
             stylesheet=[
                 # Group selectora
                 {
-                    'selector': 'edge',
-                    'style': {
-                        'curve-style': 'bezier' # must define to custom relation edge
-                    }
+                    "selector": "edge",
+                    "style": {
+                        "curve-style": "bezier"  # must define to custom relation edge
+                    },
                 },
                 {
                     "selector": ".home",
@@ -122,9 +134,50 @@ app.layout = html.Div(
                     },
                 },
             ],
-        )
+        ),
     ]
 )
+
+
+# Create callback when click node
+@callback(Output("tapNode", "children"), Input("databank-graph", "tapNodeData"))
+def displayTapNodeData(data):
+    if data:
+        return f"Tap node data: {data['label']}"
+    else:
+        return "Tap node data: None"
+
+
+# Create callback when click edge
+@callback(Output("tapEdge", "children"), Input("databank-graph", "tapEdgeData"))
+def displayTapEdgeData(data):
+    if data:
+        return f"Tap edge data: {data['id']}"
+    else:
+        return "Tap edge data: None"
+
+
+# Create callback when mouse over node
+@callback(
+    Output("mouseOverNode", "children"), Input("databank-graph", "mouseoverNodeData")
+)
+def displayMouseOverNodeData(data):
+    if data:
+        return f"Mouse over node data: {data['label']}"
+    else:
+        return "Mouse over node data: None"
+
+
+# Create callback when mouse over edge
+@callback(
+    Output("mouseOverEdge", "children"), Input("databank-graph", "mouseoverEdgeData")
+)
+def displayMouseOverEdgeData(data):
+    if data:
+        return f"Mouse over edge data: {data['id']}"
+    else:
+        return "Mouse over edge data: None"
+
 
 if __name__ == "__main__":
     app.run(debug=True)  # type: ignore
