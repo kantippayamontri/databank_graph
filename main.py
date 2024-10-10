@@ -30,20 +30,15 @@ def create_elements(
 
     return devices, services
 
+
 # TODO: making graph
 from dash import Dash, html
 import dash_cytoscape as cyto
 
-# import tkinter as tk
-
 app = Dash(__name__)
 
-# root = tk.Tk()
-# screen_width = root.winfo_screenwidth()
-# screen_heigth = root.winfo_screenheight()
-
 screen_width = 2000
-screen_heigth = 2000
+screen_heigth = 500
 
 device_screen_width = service_screen_width = int(screen_width / 2)
 device_screen_height = service_screen_heigth = screen_heigth
@@ -76,50 +71,12 @@ if devices is not None:
     ic(home_tree.max_depth())
     home_tree.print_tree()
 
-    # device_tree_list = []
-    # device_tree_list = home_tree.gen_data_visual(
-    #     top_x=0,
-    #     top_y=0,
-    #     width_slot=0,
-    #     height_slot=0,
-    # )
-
-    # device_tree_list = []
-    # for index, device in enumerate(devices):
-    #     # TODO: create device tree
-    #     device_tree = create_device_tree(device=device)
-    #     ic(device_tree.max_depth(node=device_tree.root))
-    #     device_tree_list.append(device_tree)
-
-    # for _device_tree in device_tree_list:
-    #     ...
-
-    # device_width_slot = int(each_device_width / device_tree.max_depth(node=device_tree.root))
-    # device_height_slot = int(each_device_height)
-
-    # device_tree.print_tree(show_id=False, show_level=True)
-    # device_graph_list = device_tree.gen_data_visual(
-    #     start_node=device_tree.root,
-    #     top_x=0,
-    #     top_y=(index * each_device_height),
-    #     width_slot = device_width_slot,
-    #     height_slot = device_height_slot,
-    # )
-
-# ic(screen_width, screen_heigth)
-
-# device_graph_list = [
-#     {"data": {"id": "one", "label": "Node 1"}, "position": {"x": 75, "y": 75}},
-#     {"data": {"id": "two", "label": "Node 2"}, "position": {"x": 200, "y": 200}},
-#     {"data": {"source": "one", "target": "two"}},
-# ]
-
-device_graph_list = home_tree.gen_data_visual(
-    start_node=home_tree.get_root(),    
+device_graph_list = home_tree.gen_data_visual_home(
+    start_node=home_tree.get_root(),
     top_x=0,
     top_y=0,
-    width_slot=each_device_width,
-    height_slot=each_device_height,
+    screen_width=device_screen_width,
+    screen_height=device_screen_height,
 )
 
 ic(device_graph_list)
@@ -130,10 +87,41 @@ app.layout = html.Div(
             id="databank-graph",
             layout={"name": "preset"},
             style={
-                "width": str(screen_width) + "px",
-                "height": str(screen_heigth) + "px",
+                "width":str(screen_width) + "px",
+                "height":str(screen_heigth) + "px",
             },
             elements=device_graph_list,
+            stylesheet=[
+                # Group selectora
+                {
+                    'selector': 'edge',
+                    'style': {
+                        'curve-style': 'bezier' # must define to custom relation edge
+                    }
+                },
+                {
+                    "selector": ".home",
+                    "style": {"background-color": "#3498db", "content": "data(label)"},
+                },
+                # Device node
+                {
+                    "selector": ".device_normal",
+                    "style": {"background-color": "#148f77", "content": "data(label)"},
+                },
+                {
+                    "selector": ".device_special",
+                    "style": {"background-color": "#f39c12", "content": "data(label)"},
+                },
+                # Device relation
+                {
+                    "selector": '[id *= "relation_"]',
+                    "style": {
+                        "line-color": "black",
+                        "target-arrow-color": "black",
+                        "target-arrow-shape": "triangle",
+                    },
+                },
+            ],
         )
     ]
 )
