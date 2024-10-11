@@ -3,6 +3,13 @@ from enum import Enum
 from icecream import ic
 
 
+class Service(BaseModel):
+    id: str
+    name: str = Field(alias="service_name")
+    type: str = Field(alias="service_type")
+    cate: dict[str, dict[str, dict[str, str]]] | None = Field(alias="cate_service")
+
+
 class Device(BaseModel):
     id: str
     name: str = Field(alias="device_name")
@@ -25,11 +32,26 @@ class HomeEnum(Enum):
     ID = "id"
 
 
+class ServiceEnum(Enum):
+    ID = "id"
+    NAME = "name"
+    TYPE = "type"
+    CATE = "cate"
+
+
+class CompanyEnum(Enum):
+    ID = "id"
+
+
 class VisualNodeType(Enum):
+    HOME = "home"
     DEVICE_NORMAL = "device_normal"
     DEVICE_SPECIAL = "device_special"
-    DEVICE_RELATION = "device_relation"
-    HOME = "home"
+
+    COMPANY = "company"
+    SERVICE_NORMAL = "service_normal"
+
+    RELATION = "device_relation"
 
 
 device_category_mapping = {
@@ -66,8 +88,45 @@ device_category_mapping = {
     ("Upload", "Yearly", "Medium"): "Protected",
 }
 
-
-class Service(BaseModel): ...
+service_category_mapping = {
+    ("View Data", "Daily", "Low"): "Complete",
+    ("View Data", "Daily", "Medium"): "Medium trust",
+    ("View Data", "Daily", "High"): "High trust",
+    ("View Report", "Daily", "Low"): "Low trust",
+    ("View Report", "Daily", "Medium"): "Medium trust",
+    ("View Report", "Daily", "High"): "High trust",
+    ("Read Data", "Daily", "Low"): "High distrust",
+    ("Read Data", "Daily", "Medium"): "Low trust",
+    ("Read Data", "Daily", "High"): "Medium trust",
+    ("View Data", "Weekly", "Low"): "Low trust",
+    ("View Data", "Weekly", "Medium"): "Medium trust",
+    ("View Data", "Weekly", "High"): "High trust",
+    ("View Report", "Weekly", "Low"): "High distrust",
+    ("View Report", "Weekly", "Medium"): "Low trust",
+    ("View Report", "Weekly", "High"): "Medium trust",
+    ("Read Data", "Weekly", "Low"): "Distrust",
+    ("Read Data", "Weekly", "Medium"): "High distrust",
+    ("Read Data", "Weekly", "High"): "Low trust",
+    ("View Data", "Monthly", "Low"): "High distrust",
+    ("View Data", "Monthly", "Medium"): "Low trust",
+    ("View Data", "Monthly", "High"): "Medium trust",
+    ("View Report", "Monthly", "Low"): "Distrust",
+    ("Report Data", "Daily", "Low"): "Medium trust",
+    ("View Report", "Monthly", "Medium"): "Medium trust",
+    ("View Report", "Monthly", "High"): "High trust",
+    ("Read Data", "Monthly", "Low"): "Distrust",
+    ("Read Data", "Monthly", "Medium"): "Distrust",
+    ("Read Data", "Monthly", "High"): "Low trust",
+    ("View Data", "Yearly", "Low"): "Distrust",
+    ("View Data", "Yearly", "Medium"): "Medium trust",
+    ("View Data", "Yearly", "High"): "High trust",
+    ("View Report", "Yearly", "Low"): "Distrust",
+    ("View Report", "Yearly", "Medium"): "Distrust",
+    ("View Report", "Yearly", "High"): "Low trust",
+    ("Read Data", "Yearly", "Low"): "Distrust",
+    ("Read Data", "Yearly", "Medium"): "Distrust",
+    ("Read Data", "Yearly", "High"): "Distrust",
+}
 
 
 class Data(BaseModel):
@@ -106,7 +165,7 @@ class Node:
         self.label: str = label
         self.children: list[Node] | None = []
         self.parent: list[Node] = []
-        self.node_type: DeviceEnum | HomeEnum = node_type
+        self.node_type: DeviceEnum | HomeEnum | CompanyEnum | ServiceEnum = node_type
         self.visual_type: VisualNodeType = visual_type
 
 
@@ -183,10 +242,13 @@ class GraphTree:
         height_slot: int,
         start_node: Node = None,
         data_visual_list: list = [],
+        stop_node: Node = None,
     ):
 
         # ic(top_x, top_y, width_slot, height_slot)
-        ic(f"call from GraphTree")
+
+        if stop_node is None:
+            stop_node = self.get_root()
 
         if start_node is not None:
             data_visual_list.append(
@@ -215,18 +277,21 @@ class GraphTree:
                         height_slot=new_height_slot,
                         start_node=child,
                         data_visual_list=data_visual_list,
+                        stop_node=stop_node,
                     )
 
                     if child.node_type != DeviceEnum.ACTION_UNPROCESSED:
                         relation_dict = self.create_relation_visual(
-                            source=start_node.id, target=child.id, cls=VisualNodeType.DEVICE_RELATION
+                            source=start_node.id,
+                            target=child.id,
+                            cls=VisualNodeType.RELATION,
                         )
                         data_visual_list.append(relation_dict)
 
                     if child_dict is not None:
                         data_visual_list.append(child_dict)
 
-            if start_node.id == self.root.id:
+            if start_node.id == stop_node.id:
                 return data_visual_list
 
     def create_node_visual(
@@ -236,18 +301,22 @@ class GraphTree:
         return {
             "data": {"id": id, "label": label},
             "position": {"x": x, "y": y},
-            "classes": cls.value 
+            "classes": cls.value,
         }
 
     def create_relation_visual(self, source: str, target: str, cls: VisualNodeType):
         return {
-            "data": {"id":"relation_source_" + source + "_target_" + target,"source": source, "target": target},
-            "classes": cls.value
+            "data": {
+                "id": "relation_source_" + source + "_target_" + target,
+                "source": source,
+                "target": target,
+            },
+            "classes": cls.value,
         }
 
     def print_tree(self, show_id=False, show_level=False):
         self._print_tree_recursive(
-            node=self.root, show_id=show_id, show_level=show_level
+            node=self.get_root(), show_id=show_id, show_level=show_level
         )
 
     def _print_tree_recursive(
@@ -272,7 +341,12 @@ class GraphTree:
 
 
 class HomeTree(GraphTree):
-    def __init__(self, home_id: str, home_label: str, devices: list[Device]):
+    def __init__(
+        self,
+        home_id: str,
+        home_label: str,
+        devices: list[Device],
+    ):
         super().__init__(
             self,
         )
@@ -293,9 +367,10 @@ class HomeTree(GraphTree):
         # Create Device Node for each device
         for _device in self.devices:
             device_tree: GraphTree = self.create_device_tree(device=_device)
-            _ = self.add_child(
-                parent_node=self.get_root(), child_node=device_tree.get_root()
-            )
+            if device_tree is not None:
+                _ = self.add_child(
+                    parent_node=self.get_root(), child_node=device_tree.get_root()
+                )
 
     def gen_data_visual_home(
         self,
@@ -303,28 +378,56 @@ class HomeTree(GraphTree):
         top_y: int,
         # width_slot: int,
         # height_slot: int,
-        start_node: Node,
         data_visual_list: list = [],
         screen_width: int = int(1920 / 2),
         screen_height: int = int(1080 / 2),
+        show_home_node: bool = True,
     ):
 
-        max_depth: int = (
-            self.max_depth()
-        )  # count number of maximum node for calculate the slot width and height
+        data_visual_list = []
 
-        each_slot_width = int(screen_width / max_depth)
-        each_slot_height = screen_height
+        if show_home_node:
 
-        # ic(each_slot_width, each_slot_height, max_depth)
+            max_depth: int = (
+                self.max_depth()
+            )  # count number of maximum node for calculate the slot width and height
 
-        data_visual_list = self.gen_data_visual(
-            top_x=top_x,
-            top_y=top_y,
-            width_slot=each_slot_width,
-            height_slot=each_slot_height,
-            start_node=self.get_root(),
-        )
+            each_slot_width = int(screen_width / max_depth)
+            each_slot_height = screen_height
+
+            # TODO: start from home node
+            data_visual_list = self.gen_data_visual(
+                top_x=top_x,
+                top_y=top_y,
+                width_slot=each_slot_width,
+                height_slot=each_slot_height,
+                start_node=self.get_root(),
+            )
+
+        else:
+            max_depth: int = self.max_depth() - 1  # remove home node
+
+            # TODO: start from device node
+            device_node: list[Node] = self.get_root().children
+            if max_depth:
+                number_device = len(device_node)
+                each_slot_width = int(screen_width / max_depth)
+                each_slot_height = int(screen_height / number_device)
+                for index, _child in enumerate(self.get_root().children):
+                    data_visual_list.extend(
+                        self.gen_data_visual(
+                            top_x=top_x,
+                            top_y=top_y + (index * each_slot_height),
+                            width_slot=each_slot_width,
+                            height_slot=each_slot_height,
+                            start_node=_child,
+                            stop_node=_child,
+                        )
+                    )
+
+                    # data_visual_list = data_visual_list + data_visual_list_temp
+
+        # remove home node if show_home_node = False
 
         # TODO: preprocess the position of sensitivity_action
         # check by for loop
@@ -363,8 +466,10 @@ class HomeTree(GraphTree):
         if device.unprocessed_data is not None:
             for _un in device.unprocessed_data:
                 un_processed_node = Node(
-                    id="un_" + _un, label=_un, node_type=DeviceEnum.UNPROCESSED_DATA,
-                    visual_type=VisualNodeType.DEVICE_NORMAL
+                    id="un_" + _un,
+                    label=_un,
+                    node_type=DeviceEnum.UNPROCESSED_DATA,
+                    visual_type=VisualNodeType.DEVICE_NORMAL,
                 )
                 current_node = tree.add_child(
                     parent_node=device_type_node_temp, child_node=un_processed_node
@@ -388,7 +493,7 @@ class HomeTree(GraphTree):
                         id="sen_" + sensitivity,
                         label=sensitivity,
                         node_type=DeviceEnum.SENSITIVITY,
-                        visual_type=VisualNodeType.DEVICE_NORMAL
+                        visual_type=VisualNodeType.DEVICE_NORMAL,
                     )
                     current_node = tree.add_child(
                         parent_node=current_node, child_node=sensitivity_node
@@ -397,8 +502,10 @@ class HomeTree(GraphTree):
                     # Create action node
                     action = device.raw_data[_un]["action"]
                     action_node = Node(
-                        id="at_" + action, label=action, node_type=DeviceEnum.ACTION,
-                        visual_type=VisualNodeType.DEVICE_NORMAL
+                        id="at_" + action,
+                        label=action,
+                        node_type=DeviceEnum.ACTION,
+                        visual_type=VisualNodeType.DEVICE_NORMAL,
                     )
 
                     # Create action unprocessed node #TODO: orange node
@@ -407,7 +514,7 @@ class HomeTree(GraphTree):
                         id="atun_" + action_unprocessed,
                         label=action_unprocessed.replace("_", "_"),
                         node_type=DeviceEnum.ACTION_UNPROCESSED,
-                        visual_type=VisualNodeType.DEVICE_SPECIAL
+                        visual_type=VisualNodeType.DEVICE_SPECIAL,
                     )
 
                     current_node: list[Node] = tree.add_mul_child(
@@ -421,7 +528,7 @@ class HomeTree(GraphTree):
                         id="senat_" + sensitivity_action,
                         label=sensitivity_action,
                         node_type=DeviceEnum.SENSITIVITY_ACTION,
-                        visual_type=VisualNodeType.DEVICE_SPECIAL
+                        visual_type=VisualNodeType.DEVICE_SPECIAL,
                     )
 
                     current_node = tree.add_child_mul_parent(
@@ -429,3 +536,51 @@ class HomeTree(GraphTree):
                     )
 
         return tree
+
+
+class CompanyTree(GraphTree):
+    def __init__(self, company_id: str, company_label: str, services: list[Service]):
+        super().__init__(self)
+        self.company_id: str
+        self.company_lable: str
+        self.services: list[Service] = services
+        self.root = Node(
+            id=company_id,
+            label=company_label,
+            node_type=CompanyEnum.ID,
+            visual_type=VisualNodeType.COMPANY,
+        )
+        self.merge_service_tree()
+
+    def merge_service_tree(
+        self,
+    ):
+        for _service in self.services:
+            service_tree: GraphTree = self.create_service_tree(service=_service)
+            if service_tree is not None:
+                _ = self.add_child(
+                    parent_node=self.get_root(), child_node=service_tree.get_root()
+                )
+
+    def create_service_tree(self, service: Service):
+        if service is None:
+            return None
+
+        # Create Tree and Service node
+        tree = GraphTree(
+            root=Node(
+                id=service.id,
+                label=service.name,
+                node_type=ServiceEnum.NAME,
+                visual_type=VisualNodeType.SERVICE_NORMAL,
+            )
+        )
+
+        # TODO: need to check cate of service -> need to device trust as second node
+
+        if service.cate is not None:
+            ic(f"service cate None")
+        else:
+            ic(f"service cate not None")
+
+        return None

@@ -2,7 +2,7 @@ data = {
     "devices": {
         "0": {
             "device_name": "Gauge",
-            "device_type": "Smart Meter",
+            "device_type": "",
             "device_unprocessed": ["Footage"],
         },
         "1": {

@@ -1,93 +1,49 @@
 from icecream import ic
 from graph_constants import *
 from mock_data import data
-
-
-# code to generate graph
-def create_elements(
-    _data: dict | None,
-) -> tuple[list[Device] | None, list[Service] | None]:
-    data: dict | None = _data
-    # check device
-    if not data:
-        return None, None
-
-    devices = []
-    if "devices" in data.keys():
-        for device_id in data["devices"].keys():
-            if "raw_data" not in data["devices"][device_id].keys():
-                data["devices"][device_id]["raw_data"] = None
-            device = Device(**data["devices"][device_id], id=device_id)
-            devices.append(device)
-    else:
-        ic(f"Devices not found.")
-
-    services = []
-    if "services" in data.keys():
-        ic(f"Services found.")
-    else:
-        ic(f"Services not found.")
-
-    return devices, services
-
+from graph_utils import create_elements, create_home_tree, create_company_tree
 
 # TODO: making graph
 from dash import Dash, html, Input, Output, callback, no_update
 import dash_cytoscape as cyto
 
-app = Dash(__name__)
 
+#def defind screen size 
 screen_width = 2000
 screen_heigth = 500
 
+#def devide screen size for device and service
 device_screen_width = service_screen_width = int(screen_width / 2)
 device_screen_height = service_screen_heigth = screen_heigth
 
-devices, services = create_elements(data)
-if devices:
-    ic(f"--- Devices found ---")
-    # for device in devices:
-    #     ic(device.model_dump_json())
+devices, services = create_elements(data) # get devices and services from data
 
-if services:
-    ic(f"--- Services found ---")
-    # for service in services:
-    #     ic(service.model_dump_json())
+home_tree = create_home_tree(devices=devices) # make tree for device
 
-# prepare node for device
-device_graph_list = []
-screen_width_ratio = screen_height_ratio = 1.0
-
-if devices is not None:
-
-    each_device_height = int(
-        (screen_height_ratio / len(devices)) * device_screen_height
-    )
-    each_device_width = screen_width_ratio * device_screen_width
-
-    # Create Home Tree
-    home_tree = HomeTree(home_id="h_0", home_label="Home", devices=devices)
-
-    ic(home_tree.get_root().id)
-    ic(home_tree.max_depth())
-    home_tree.print_tree()
-
+#gen grapg for visual for device
 device_graph_list = home_tree.gen_data_visual_home(
-    start_node=home_tree.get_root(),
-    top_x=0,
-    top_y=0,
-    screen_width=device_screen_width,
-    screen_height=device_screen_height,
+   top_x=0,
+   top_y=0,
+   screen_width=device_screen_width,
+   screen_height=device_screen_height,
+   show_home_node=False  #start from device node
 )
 
-ic(device_graph_list)
+# ic(device_graph_list)
 
 # prepare node for service
 service_graph_list = []
-if services is not None:
-    each_service_height = int((screen_height_ratio / len(services)) * service_screen_heigth)
-    each_service_width = screen_width_ratio * service_screen_width
+if len(services):
+    each_service_height = int(
+        (1 / len(services)) * service_screen_heigth
+    )
+    each_service_width = 1 * service_screen_width
 
+    companyTree = create_company_tree(services=services)
+
+
+# Dash App
+app = Dash(__name__)
 
 app.layout = html.Div(
     [
@@ -102,9 +58,9 @@ app.layout = html.Div(
                 "width": str(screen_width) + "px",
                 "height": str(screen_heigth) + "px",
             },
-            elements=device_graph_list,
+            elements=device_graph_list + service_graph_list,
             stylesheet=[
-                # Group selectora
+                # Group selector
                 {
                     "selector": "edge",
                     "style": {
