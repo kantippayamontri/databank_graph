@@ -40,6 +40,7 @@ if len(services):
     each_service_width = 1 * service_screen_width
 
     companyTree = create_company_tree(services=services)
+    companyTree.print_tree()
 
 
 # Dash App

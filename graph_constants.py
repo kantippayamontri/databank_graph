@@ -579,8 +579,19 @@ class CompanyTree(GraphTree):
         # TODO: need to check cate of service -> need to device trust as second node
 
         if service.cate is not None:
-            ic(f"service cate None")
-        else:
-            ic(f"service cate not None")
+            ic(f"service cate not None f{service.cate}")
 
-        return None
+            # calculate trust level from dict (action, frequency, category)
+            _action = ""
+            _frequency =""
+            _category = ""
+            trust_level = service_category_mapping(("", "", ""))
+
+
+
+        else:
+            ic(f"service cate None")
+
+            
+
+        return tree
