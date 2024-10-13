@@ -37,6 +37,8 @@ class ServiceEnum(Enum):
     NAME = "name"
     TYPE = "type"
     CATE = "cate"
+    TRUST_LEVEL = "trust_level"
+    ACTION = "action"
 
 
 class CompanyEnum(Enum):
@@ -89,7 +91,7 @@ device_category_mapping = {
 }
 
 service_category_mapping = {
-    ("View Data", "Daily", "Low"): "Complete",
+    ("View Data", "Daily", "Low"): "Low trust",
     ("View Data", "Daily", "Medium"): "Medium trust",
     ("View Data", "Daily", "High"): "High trust",
     ("View Report", "Daily", "Low"): "Low trust",
@@ -569,7 +571,7 @@ class CompanyTree(GraphTree):
         # Create Tree and Service node
         tree = GraphTree(
             root=Node(
-                id=service.id,
+                id="s_" + service.id,
                 label=service.name,
                 node_type=ServiceEnum.NAME,
                 visual_type=VisualNodeType.SERVICE_NORMAL,
@@ -579,19 +581,66 @@ class CompanyTree(GraphTree):
         # TODO: need to check cate of service -> need to device trust as second node
 
         if service.cate is not None:
+            # if services have category = need to relate with device
             ic(f"service cate not None f{service.cate}")
 
-            # calculate trust level from dict (action, frequency, category)
-            _action = ""
-            _frequency =""
-            _category = ""
-            trust_level = service_category_mapping(("", "", ""))
+            for _device_id in service.cate.keys():
+                ic(service.cate[_device_id])
+                for _device_un in service.cate[_device_id].keys():
+                    ic(_device_un)
+                    # calculate trust level from dict (action, frequency, category)
+                    _action = service.cate[_device_id][_device_un]["action"]
+                    _frequency = service.cate[_device_id][_device_un]["frequency"]
+                    _category = service.cate[_device_id][_device_un]["category"]
+                    trust_level = service_category_mapping[
+                        ic((_action, _frequency, _category))
+                    ]
+                    ic(trust_level)
 
+                    # create trust level node
+                    trust_level_node = Node(
+                        id="tl_" + trust_level,
+                        label=trust_level,
+                        node_type=ServiceEnum.TRUST_LEVEL,
+                        visual_type=VisualNodeType.SERVICE_NORMAL,
+                    )
 
+                    current_node = tree.add_child(
+                        parent_node=tree.get_root(), child_node=trust_level_node,
+                    )
+
+                    # create service_type node
+                    service_type_node = Node(
+                        id="st_" + service.type,
+                        label=service.type,
+                        node_type=ServiceEnum.TYPE,
+                        visual_type=VisualNodeType.SERVICE_NORMAL,
+                    )
+
+                    current_node = tree.add_child(parent_node=current_node, child_node=service_type_node)
+
+                    # create action node
+                    service_action_node = Node(
+                        id="sa_" + _action,
+                        label=_action,
+                        node_type=ServiceEnum.ACTION,
+                        visual_type=VisualNodeType.SERVICE_NORMAL,
+                    )
+
+                    current_node = tree.add_child(parent_node=current_node, child_node=service_action_node)
 
         else:
-            ic(f"service cate None")
+            # only service without relate with devices
 
-            
+            # create service_type node
+            _service_type = Node(
+                id="st_" + service.type,
+                label=service.type,
+                node_type=ServiceEnum.TYPE,
+                visual_type=VisualNodeType.SERVICE_NORMAL,
+            )
+            current_node = tree.add_child(
+                parent_node=tree.get_root(), child_node=_service_type
+            )
 
         return tree

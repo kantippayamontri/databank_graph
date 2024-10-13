@@ -21,13 +21,15 @@ devices, services = create_elements(data) # get devices and services from data
 home_tree = create_home_tree(devices=devices) # make tree for device
 
 #gen grapg for visual for device
-device_graph_list = home_tree.gen_data_visual_home(
-   top_x=0,
-   top_y=0,
-   screen_width=device_screen_width,
-   screen_height=device_screen_height,
-   show_home_node=False  #start from device node
-)
+device_graph_list = []
+if len(devices):
+    device_graph_list = home_tree.gen_data_visual_home(
+    top_x=0,
+    top_y=0,
+    screen_width=device_screen_width,
+    screen_height=device_screen_height,
+    show_home_node=False  #start from device node
+    )
 
 # ic(device_graph_list)
 
@@ -40,7 +42,9 @@ if len(services):
     each_service_width = 1 * service_screen_width
 
     companyTree = create_company_tree(services=services)
-    companyTree.print_tree()
+    companyTree.print_tree(show_id=True, show_level=True)
+
+    service_graph_list = companyTree.gen_data_visual_
 
 
 # Dash App
