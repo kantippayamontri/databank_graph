@@ -2,7 +2,7 @@ data = {
     "devices": {
         "0": {
             "device_name": "Gauge",
-            "device_type": "",
+            "device_type": "Smart Gauge",
             "device_unprocessed": ["Footage"],
         },
         "1": {

@@ -233,6 +233,37 @@ class GraphTree:
             return 1
         else:
             return 1 + max(self.max_depth(child) for child in node.children)
+    
+    def find_node(self,id:str, node: Node = None):
+        if node is None:
+            node = self.get_root()
+        ic(node.id)
+
+        if node.id == id:
+            return node 
+        elif len(node.children) > 0:
+            for child in node.children:
+                result =  self.find_node(id=id, node=child)
+                if result:
+                    return result
+    
+
+
+    def find_leaf(self, node: Node | None = None):
+        if node is None:
+            node = self.get_root()
+
+        #base case: if node has no children, it is a leaf node
+        if len(node.children) == 0:
+            return [node]
+        #recursive case: if node has children, find leaf node in each child
+        else:
+            leaf_list = []
+            for child in node.children:
+                leaf_list.extend(self.find_leaf(child))
+            
+            return leaf_list
+            
 
     def gen_data_visual(
         self,
@@ -245,6 +276,9 @@ class GraphTree:
         start_node: Node = None,
         data_visual_list: list = [],
         stop_node: Node = None,
+        reverse: bool = False,
+        start_width_pos: int = 0,  # min x position use for reverse
+        end_width_pos: int = 0,  # max x position use for reverse
     ):
 
         # ic(top_x, top_y, width_slot, height_slot)
@@ -253,11 +287,16 @@ class GraphTree:
             stop_node = self.get_root()
 
         if start_node is not None:
+            dist_from_start = top_x - start_width_pos
             data_visual_list.append(
                 self.create_node_visual(
                     id=start_node.id,
                     label=start_node.label.replace("_", " "),
-                    x=top_x + int(width_slot / 2),
+                    x=(
+                        ((end_width_pos - dist_from_start) + int(width_slot / 2))
+                        if reverse
+                        else (top_x + int(width_slot / 2))
+                    ),
                     y=top_y + int(height_slot / 2),
                     cls=start_node.visual_type,
                 )
@@ -280,6 +319,9 @@ class GraphTree:
                         start_node=child,
                         data_visual_list=data_visual_list,
                         stop_node=stop_node,
+                        reverse=reverse,
+                        start_width_pos=start_width_pos,
+                        end_width_pos=end_width_pos,
                     )
 
                     if child.node_type != DeviceEnum.ACTION_UNPROCESSED:
@@ -378,9 +420,6 @@ class HomeTree(GraphTree):
         self,
         top_x: int,
         top_y: int,
-        # width_slot: int,
-        # height_slot: int,
-        data_visual_list: list = [],
         screen_width: int = int(1920 / 2),
         screen_height: int = int(1080 / 2),
         show_home_node: bool = True,
@@ -552,7 +591,7 @@ class CompanyTree(GraphTree):
             node_type=CompanyEnum.ID,
             visual_type=VisualNodeType.COMPANY,
         )
-        self.merge_service_tree()
+        self.merge_service_tree()  # merge each service into one company
 
     def merge_service_tree(
         self,
@@ -606,7 +645,8 @@ class CompanyTree(GraphTree):
                     )
 
                     current_node = tree.add_child(
-                        parent_node=tree.get_root(), child_node=trust_level_node,
+                        parent_node=tree.get_root(),
+                        child_node=trust_level_node,
                     )
 
                     # create service_type node
@@ -617,7 +657,9 @@ class CompanyTree(GraphTree):
                         visual_type=VisualNodeType.SERVICE_NORMAL,
                     )
 
-                    current_node = tree.add_child(parent_node=current_node, child_node=service_type_node)
+                    current_node = tree.add_child(
+                        parent_node=current_node, child_node=service_type_node
+                    )
 
                     # create action node
                     service_action_node = Node(
@@ -627,7 +669,11 @@ class CompanyTree(GraphTree):
                         visual_type=VisualNodeType.SERVICE_NORMAL,
                     )
 
-                    current_node = tree.add_child(parent_node=current_node, child_node=service_action_node)
+                    current_node = tree.add_child(
+                        parent_node=current_node, child_node=service_action_node
+                    )
+
+                    # TODO: create relation with device
 
         else:
             # only service without relate with devices
@@ -644,3 +690,61 @@ class CompanyTree(GraphTree):
             )
 
         return tree
+
+    # def create_relation_device(self, service: Service, device: Device):
+    #     return self.create_relation_visual(source=, target=, cls=VisualNodeType.RELATION)
+
+    def gen_data_visual_company(
+        self,
+        top_x: int,
+        top_y: int,
+        screen_width: int = int(1920 / 2),
+        screen_height: int = int(1080 / 2),
+        show_company_node: bool = True,
+        home: HomeTree | None = None,
+    ):
+        data_visual_list = []
+
+        if show_company_node:
+            # TODO: start from company node
+            max_dept: int = self.max_depth()
+
+            each_slot_width: int = int(screen_width / max_dept)
+            each_slot_height: int = screen_height
+
+            # TODO: start from company node
+            data_visual_list = self.gen_data_visual(
+                top_x=top_x,
+                top_y=top_y,
+                width_slot=each_slot_width,
+                height_slot=each_slot_height,
+                start_node=self.get_root(),
+                reverse=True,
+                start_width_pos=top_x,
+                end_width_pos=top_x + screen_width,
+            )
+
+        else:
+            # TODO: start from service node
+            max_dept: int = self.max_depth() - 1
+            if max_dept:
+                number_service: int = len(self.get_root().children)
+                each_slot_width: int = int(screen_width / max_dept)
+                each_slot_height: int = int(screen_height / number_service)
+                # loop service
+                for index, _child in enumerate(self.get_root().children):
+                    data_visual_list.extend(
+                        self.gen_data_visual(
+                            top_x=top_x,
+                            top_y=top_y + (index * each_slot_height),
+                            width_slot=each_slot_width,
+                            height_slot=each_slot_height,
+                            start_node=_child,
+                            stop_node=_child,
+                            reverse=True,
+                            start_width_pos=top_x,
+                            end_width_pos=top_x + screen_width,
+                        )
+                    )
+
+        return data_visual_list

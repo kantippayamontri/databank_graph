@@ -1,7 +1,7 @@
 from icecream import ic
 from graph_constants import *
 from mock_data import data
-from graph_utils import create_elements, create_home_tree, create_company_tree
+from graph_utils import create_elements, create_home_tree, create_company_tree, create_relation_service_device
 
 # TODO: making graph
 from dash import Dash, html, Input, Output, callback, no_update
@@ -19,6 +19,7 @@ device_screen_height = service_screen_heigth = screen_heigth
 devices, services = create_elements(data) # get devices and services from data
 
 home_tree = create_home_tree(devices=devices) # make tree for device
+home_tree.print_tree(show_id=True, show_level=True)
 
 #gen grapg for visual for device
 device_graph_list = []
@@ -44,7 +45,14 @@ if len(services):
     companyTree = create_company_tree(services=services)
     companyTree.print_tree(show_id=True, show_level=True)
 
-    service_graph_list = companyTree.gen_data_visual_
+    service_graph_list = companyTree.gen_data_visual_company(
+        top_x=service_screen_width,
+        top_y=0,
+        screen_width=service_screen_width,
+        screen_height=service_screen_heigth,
+        show_company_node=False,
+        home=home_tree,
+    )
 
 
 # Dash App
@@ -63,7 +71,7 @@ app.layout = html.Div(
                 "width": str(screen_width) + "px",
                 "height": str(screen_heigth) + "px",
             },
-            elements=device_graph_list + service_graph_list,
+            elements=device_graph_list + service_graph_list + create_relation_service_device(home=home_tree, company=companyTree),
             stylesheet=[
                 # Group selector
                 {
@@ -72,6 +80,7 @@ app.layout = html.Div(
                         "curve-style": "bezier"  # must define to custom relation edge
                     },
                 },
+                # Home node
                 {
                     "selector": ".home",
                     "style": {"background-color": "#3498db", "content": "data(label)"},
@@ -84,6 +93,16 @@ app.layout = html.Div(
                 {
                     "selector": ".device_special",
                     "style": {"background-color": "#f39c12", "content": "data(label)"},
+                },
+                # Company node
+                {
+                    "selector": ".company",
+                    "style": {"background-color": "#592720", "content": "data(label)"},
+                },
+                # Service node
+                {
+                    "selector": ".service_normal",
+                    "style": {"background-color": "#e53145", "content": "data(label)"},
                 },
                 # Device relation
                 {
