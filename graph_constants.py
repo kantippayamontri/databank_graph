@@ -141,18 +141,9 @@ class Position(BaseModel):
     y: int
 
 
-# class RelationData(BaseModel):
-#     source: str
-#     target: str
-
-
 class GraphNode(BaseModel):
     data: Data
     position: Position
-
-
-# class Relation(BaseModel):
-#     data: RelationData | None
 
 
 class Node:
@@ -233,37 +224,34 @@ class GraphTree:
             return 1
         else:
             return 1 + max(self.max_depth(child) for child in node.children)
-    
-    def find_node(self,id:str, node: Node = None):
+
+    def find_node(self, id: str, node: Node = None):
         if node is None:
             node = self.get_root()
         ic(node.id)
 
         if node.id == id:
-            return node 
+            return node
         elif len(node.children) > 0:
             for child in node.children:
-                result =  self.find_node(id=id, node=child)
+                result = self.find_node(id=id, node=child)
                 if result:
                     return result
-    
-
 
     def find_leaf(self, node: Node | None = None):
         if node is None:
             node = self.get_root()
 
-        #base case: if node has no children, it is a leaf node
+        # base case: if node has no children, it is a leaf node
         if len(node.children) == 0:
             return [node]
-        #recursive case: if node has children, find leaf node in each child
+        # recursive case: if node has children, find leaf node in each child
         else:
             leaf_list = []
             for child in node.children:
                 leaf_list.extend(self.find_leaf(child))
-            
+
             return leaf_list
-            
 
     def gen_data_visual(
         self,
@@ -523,13 +511,18 @@ class HomeTree(GraphTree):
                 if _un in device.raw_data.keys():  # found raw data
 
                     # Create category -> sensitivity node
-                    sensitivity = device_category_mapping[
-                        (
-                            device.raw_data[_un]["action"],
-                            device.raw_data[_un]["frequency"],
-                            device.raw_data[_un]["sensitivity"],
-                        )
-                    ]
+                    sen_key = (
+                        device.raw_data[_un]["action"],
+                        device.raw_data[_un]["frequency"],
+                        device.raw_data[_un]["sensitivity"],
+                    )
+
+                    sensitivity = (
+                        device_category_mapping[sen_key]
+                        if sen_key in device_category_mapping.keys()
+                        else "Private"
+                    )
+
                     sensitivity_node = Node(
                         id="sen_" + sensitivity,
                         label=sensitivity,
@@ -631,9 +624,12 @@ class CompanyTree(GraphTree):
                     _action = service.cate[_device_id][_device_un]["action"]
                     _frequency = service.cate[_device_id][_device_un]["frequency"]
                     _category = service.cate[_device_id][_device_un]["category"]
-                    trust_level = service_category_mapping[
-                        ic((_action, _frequency, _category))
-                    ]
+                    trust_key = (_action, _frequency, _category)
+                    trust_level = (
+                        service_category_mapping[trust_key]
+                        if trust_key in service_category_mapping.keys()
+                        else "Low trust"
+                    )
                     ic(trust_level)
 
                     # create trust level node

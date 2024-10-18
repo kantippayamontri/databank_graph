@@ -83,13 +83,18 @@ def create_relation_service_device(home: HomeTree | None = None, company: Compan
             # find service node
             service_node = company.find_node(id="c_0_s_" + _service_id)
             service_leaf = company.find_leaf(node=service_node)
+            for leaf in service_leaf:
+                ic(f"service leaf label: " + leaf.label)
+                ic(f"service leaf id: " + leaf.id)
+            # service_leaf = list(leaf for leaf in service_leaf if )[0]
 
             # find device node
             device_node = home.find_node(id="h_0_d_" + _device_id)
             device_leaf = home.find_leaf(node=device_node)
+            for leaf in device_leaf:
+                ic(f"device leaf label: " + leaf.label)
+                ic(f"device leaf id: " + leaf.id)
 
             service_device_relation.append(company.create_relation_visual(source=service_leaf[0].id, target=device_leaf[0].id, cls=VisualNodeType.RELATION))
-
-
 
     return service_device_relation
