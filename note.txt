@@ -1,0 +1,8 @@
+how to run the program
+
+1. check is python version is 3.11.7 (this project use python version 3.11.7)
+2. pip install -r requirements.txt
+3. python main.py
+
+usefull resources
+1. https://dash.plotly.com/cytoscape
