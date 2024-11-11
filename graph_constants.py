@@ -793,18 +793,18 @@ class CompanyTree(GraphTree):
                     )
 
                     # create service_type node
-                    id = "st_" + service.type
-                    check = [node for node in service_type_name_exist if id.replace(' ','_').lower() in node.id.lower()]
-                    if len(check)==0:
-                        service_type_node = Node(
-                            id="st_" + service.type,
-                            label=service.type,
-                            node_type=ServiceEnum.TYPE,
-                            visual_type=VisualNodeType.SERVICE_NORMAL,
-                        )
-                        service_type_name_exist.append(service_type_node)
-                    else:
-                        service_type_node =check[0]
+                    # id = "st_" + service.type
+                    # check = [node for node in service_type_name_exist if id.replace(' ','_').lower() in node.id.lower()]
+                    # if len(check)==0:
+                    service_type_node = Node(
+                        id="st_" + service.type,
+                        label=service.type,
+                        node_type=ServiceEnum.TYPE,
+                        visual_type=VisualNodeType.SERVICE_NORMAL,
+                    )
+                    #     service_type_name_exist.append(service_type_node)
+                    # else:
+                    #     service_type_node =check[0]
                     current_node = tree.add_child(
                         parent_node=current_node, child_node=service_type_node
                     )
