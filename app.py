@@ -109,8 +109,8 @@ def display_hover_popup(elements,tapNode,tapEdge):
         # Position the popup based on node position
         style = {
             "display": "block",
-            "left": f"{tapNode["renderedPosition"]["x"] + 50}px",  # Offset to avoid direct overlap
-            "top": f"{tapNode["renderedPosition"]["y"] +10}px",
+            "left": f"{tapNode['renderedPosition']['x'] + 50}px",  # Offset to avoid direct overlap
+            "top": f"{tapNode['renderedPosition']['y'] +10}px",
             "backgroundColor": "lightgrey",
             "padding": "5px",
             "position": "absolute",
@@ -164,4 +164,4 @@ def display_hover_popup(elements,tapNode,tapEdge):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)  # type: ignore
+    app.run(port=5000,)  # type: ignore
