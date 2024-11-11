@@ -210,7 +210,6 @@ class GraphTree:
     def append_id_parent(self, node: Node):
         if node.parent is not None:
             parent_id = ""
-
             for parent in node.parent:
                 parent_id += parent.id
 
@@ -228,7 +227,7 @@ class GraphTree:
     def find_node(self, id: str, node: Node = None):
         if node is None:
             node = self.get_root()
-        ic(node.id)
+        # ic(node.id)
 
         if node.id == id:
             return node
@@ -237,7 +236,15 @@ class GraphTree:
                 result = self.find_node(id=id, node=child)
                 if result:
                     return result
-
+    def find_all_node(self, node: Node = None):
+        if node is None:
+            self.find_all_node( node=self.get_root())
+        elif len(node.children) > 0:
+            for child in node.children:
+                self.find_all_node(node=child)
+                # print(child.id)
+        else: 
+            return 1
     def find_leaf(self, node: Node | None = None):
         if node is None:
             node = self.get_root()
@@ -250,7 +257,6 @@ class GraphTree:
             leaf_list = []
             for child in node.children:
                 leaf_list.extend(self.find_leaf(child))
-
             return leaf_list
 
     def gen_data_visual(
@@ -267,6 +273,9 @@ class GraphTree:
         reverse: bool = False,
         start_width_pos: int = 0,  # min x position use for reverse
         end_width_pos: int = 0,  # max x position use for reverse
+        length: int = 0,
+        height: int = 0,
+
     ):
 
         # ic(top_x, top_y, width_slot, height_slot)
@@ -289,16 +298,13 @@ class GraphTree:
                     cls=start_node.visual_type,
                 )
             )  # append own node
-
             number_child = len(start_node.children)
             if number_child > 0:  # go to children node
                 # calculate the height slot of each child node
                 new_height_slot = height_slot / number_child
                 new_width_slot = width_slot
-
                 for index, child in enumerate(start_node.children):
                     # check the same parent
-
                     child_dict = self.gen_data_visual(
                         top_x=top_x + new_width_slot,
                         top_y=top_y + (index * new_height_slot),
@@ -364,7 +370,7 @@ class GraphTree:
         if show_id:
             show_string = show_string + f" ({str(node.id)})"
 
-        print(show_string)
+        # print(show_string)
 
         for child in node.children:
             self._print_tree_recursive(
@@ -397,12 +403,13 @@ class HomeTree(GraphTree):
         self,
     ):  # this function connect home and device together
         # Create Device Node for each device
+        device_datas=[]
         for _device in self.devices:
-            device_tree: GraphTree = self.create_device_tree(device=_device)
-            if device_tree is not None:
-                _ = self.add_child(
-                    parent_node=self.get_root(), child_node=device_tree.get_root()
-                )
+            device_tree: GraphTree = self.create_device_tree(device=_device,device_datas=device_datas)
+            # if device_tree is not None:
+            #     _ = self.add_child(
+            #         parent_node=self.get_root(), child_node=device_tree.get_root()
+            #     )
 
     def gen_data_visual_home(
         self,
@@ -435,24 +442,149 @@ class HomeTree(GraphTree):
 
         else:
             max_depth: int = self.max_depth() - 1  # remove home node
-
             # TODO: start from device node
             device_node: list[Node] = self.get_root().children
             if max_depth:
                 number_device = len(device_node)
-                each_slot_width = int(screen_width / max_depth)
+                each_slot_width = int((screen_width) / max_depth)
                 each_slot_height = int(screen_height / number_device)
+                node1 = []
+                node2 = []
+                node3 = []
+                node4 = []
+                relation2 = []
+                relation4 = []
+                level1_name = []
+                level2_name = []
+                level3_name = []
+                level4_name = []
+                # find node
                 for index, _child in enumerate(self.get_root().children):
-                    data_visual_list.extend(
-                        self.gen_data_visual(
-                            top_x=top_x,
-                            top_y=top_y + (index * each_slot_height),
-                            width_slot=each_slot_width,
-                            height_slot=each_slot_height,
-                            start_node=_child,
-                            stop_node=_child,
+                    for index1, _child1 in enumerate(_child.children):
+                        id = _child1.id
+                        check = [name for name in level1_name if id == name]
+                        if len(check)==0:
+                            node1.append(_child1)
+                            level1_name.append(_child1.id)
+                        for index2, _child2 in enumerate(_child1.children):
+                            check = [name for name in level2_name if _child2.id == name]
+                            if len(check)==0:
+                                node2.append(_child2)
+                                level2_name.append(_child2.id)
+                            relation2.append(_child2)
+                            for index3, _child3 in enumerate(_child2.children):
+                                check = [name for name in level3_name if _child3.id == name]
+                                if len(check)==0:
+                                    node3.append(_child3)
+                                    level3_name.append(_child3.id)
+                                for index4, _child4 in enumerate(_child3.children):
+                                    check = [name for name in level4_name if _child4.id == name]
+                                    if len(check)==0:
+                                        node4.append(_child4)
+                                        level4_name.append(_child4.id)
+                                    relation4.append(_child4)
+                # show node
+                for index, _child in enumerate(self.get_root().children):
+                    data_visual_list.append(
+                        self.create_node_visual(
+                            id=_child.id,
+                            label=_child.label.replace("_", " "),
+                            x=(0),
+                            y=index*(screen_height/number_device),
+                            cls=_child.visual_type,
                         )
                     )
+                for index, _child in enumerate(node1):
+                    data_visual_list.append(
+                        self.create_node_visual(
+                            id=_child.id,
+                            label=_child.label.replace("_", " "),
+                            x=(each_slot_width),
+                            y=index*(screen_height/len(node1)),
+                            cls=_child.visual_type,
+                        )
+                    )
+                    if _child.node_type != DeviceEnum.ACTION_UNPROCESSED:
+                        parent = self.get_parent_id(_child)
+                        for id in parent:
+                            relation_dict = self.create_relation_visual(
+                                source=id,
+                                target=_child.id,
+                                cls=VisualNodeType.RELATION,
+                            )
+                            data_visual_list.append(relation_dict)
+                for index, _child in enumerate(node2): 
+                    data_visual_list.append(
+                        self.create_node_visual(
+                            id=_child.id,
+                            label=_child.label.replace("_", " "),
+                            x=(2*each_slot_width),
+                            y=index*(screen_height/len(node2)),
+                            cls=_child.visual_type,
+                        )
+                    )
+                for index, _child in enumerate(relation2):
+                    if _child.node_type != DeviceEnum.ACTION_UNPROCESSED:
+                        parent = self.get_parent_id(_child)
+                        for id in parent:
+                            relation_dict = self.create_relation_visual(
+                                source=id,
+                                target=_child.id,
+                                cls=VisualNodeType.RELATION,
+                            )
+                            data_visual_list.append(relation_dict)
+                for index, _child in enumerate(node3): 
+                    data_visual_list.append(
+                        self.create_node_visual(
+                            id=_child.id,
+                            label=_child.label.replace("_", " "),
+                            x=(3*each_slot_width),
+                            y=index*(screen_height/len(node3)),
+                            cls=_child.visual_type,
+                        )
+                    )
+                    if _child.node_type != DeviceEnum.ACTION_UNPROCESSED:
+                        parent = self.get_parent_id(_child)
+                        for id in parent:
+                            relation_dict = self.create_relation_visual(
+                                source=id,
+                                target=_child.id,
+                                cls=VisualNodeType.RELATION,
+                            )
+                            data_visual_list.append(relation_dict)
+                for index, _child in enumerate(node4): 
+                    data_visual_list.append(
+                        self.create_node_visual(
+                            id=_child.id,
+                            label=_child.label.replace("_", " "),
+                            x=(4*each_slot_width),
+                            y=index*(screen_height/len(node4)),
+                            cls=_child.visual_type,
+                        )
+                    )
+                for index, _child in enumerate(relation4):
+                    if _child.node_type != DeviceEnum.ACTION_UNPROCESSED:
+                        parent = self.get_parent_id(_child)
+                        for id in parent:
+                            relation_dict = self.create_relation_visual(
+                                source=id,
+                                target=_child.id,
+                                cls=VisualNodeType.RELATION,
+                            )
+                            data_visual_list.append(relation_dict)
+                # for index, _child in enumerate(self.get_root().children):
+                #     data_visual_list.extend(
+                #         self.gen_data_visual(
+                #             top_x=top_x,
+                #             top_y=top_y + (index * each_slot_height),
+                #             width_slot=each_slot_width,
+                #             height_slot=each_slot_height,
+                #             start_node=_child,
+                #             stop_node=_child,
+                #             length = length,
+                #             height = screen_height,
+                #         )
+                #     )
 
                     # data_visual_list = data_visual_list + data_visual_list_temp
 
@@ -464,11 +596,10 @@ class HomeTree(GraphTree):
 
         return data_visual_list
 
-    def create_device_tree(self, device: Device | None):
+    def create_device_tree(self, device: Device | None,device_datas):
         # ic(device.model_dump())
         if device is None:
             return None
-
         # Create Tree and add device node
         tree = GraphTree(
             root=Node(
@@ -479,34 +610,49 @@ class HomeTree(GraphTree):
             )
         )
         root = tree.get_root()
-        # Create Device type Node
-        if device.type is not None:
-            device_type_node = Node(
-                id="dt_" + device.type,
-                label=device.type,
-                node_type=DeviceEnum.TYPE,
-                visual_type=VisualNodeType.DEVICE_NORMAL,
+        self.add_child(
+                parent_node=self.get_root(), child_node=tree.get_root()
             )
-            current_node = tree.add_child(parent_node=root, child_node=device_type_node)
+        # # Create Device type Node
+        # if device.type is not None:
+        #     id = "dt_" + device.type
+        #     check = [node for node in device_datas if id.replace(' ','_').lower() in node.id.lower()]
+        #     if len(check)==0:
+        #         device_type_node = Node(
+        #             id=id,
+        #             label=device.type,
+        #             node_type=DeviceEnum.TYPE,
+        #             visual_type=VisualNodeType.DEVICE_NORMAL,
+        #         )
+        #         device_datas.append(device_type_node)
+        #     else:
+        #         device_type_node = [node for node in device_datas if id.replace(' ','_').lower() in node.id.lower()][0]
+        #     current_node = tree.add_child(parent_node=root, child_node=device_type_node)
+        
+        # device_type_node_temp = current_node  # for separate unprocessed data branch
 
-        device_type_node_temp = current_node  # for separate unprocessed data branch
-
-        # Create Device unprocessed Node
+        # # Create Device unprocessed Node
         if device.unprocessed_data is not None:
             for _un in device.unprocessed_data:
-                un_processed_node = Node(
-                    id="un_" + _un,
-                    label=_un,
-                    node_type=DeviceEnum.UNPROCESSED_DATA,
-                    visual_type=VisualNodeType.DEVICE_NORMAL,
-                )
+                id = "un_" + _un
+                check = [node for node in device_datas if id.replace(' ','_').lower() in node.id.lower()]
+                if len(check)==0:
+                    un_processed_node = Node(
+                        id="un_" + _un,
+                        label=_un,
+                        node_type=DeviceEnum.UNPROCESSED_DATA,
+                        visual_type=VisualNodeType.DEVICE_NORMAL,
+                    )
+                    device_datas.append(un_processed_node)
+                else:
+                    un_processed_node = check[0]
                 current_node = tree.add_child(
-                    parent_node=device_type_node_temp, child_node=un_processed_node
+                    parent_node=root, child_node=un_processed_node
                 )
 
-                # Create raw data
-                if device.raw_data is None:
-                    continue
+        #         # Create raw data
+        #         if device.raw_data is None:
+        #             continue
 
                 if _un in device.raw_data.keys():  # found raw data
 
@@ -522,7 +668,6 @@ class HomeTree(GraphTree):
                         if sen_key in device_category_mapping.keys()
                         else "Private"
                     )
-
                     sensitivity_node = Node(
                         id="sen_" + sensitivity,
                         label=sensitivity,
@@ -573,6 +718,7 @@ class HomeTree(GraphTree):
 
 
 class CompanyTree(GraphTree):
+
     def __init__(self, company_id: str, company_label: str, services: list[Service]):
         super().__init__(self)
         self.company_id: str
@@ -589,18 +735,20 @@ class CompanyTree(GraphTree):
     def merge_service_tree(
         self,
     ):
+        service_type_name_exist = []
         for _service in self.services:
-            service_tree: GraphTree = self.create_service_tree(service=_service)
+            service_tree: GraphTree = self.create_service_tree(service=_service,service_type_name_exist=service_type_name_exist)
             if service_tree is not None:
                 _ = self.add_child(
                     parent_node=self.get_root(), child_node=service_tree.get_root()
                 )
 
-    def create_service_tree(self, service: Service):
+    def create_service_tree(self, service: Service,service_type_name_exist):
         if service is None:
             return None
 
         # Create Tree and Service node
+        # print(service.name)
         tree = GraphTree(
             root=Node(
                 id="s_" + service.id,
@@ -614,12 +762,11 @@ class CompanyTree(GraphTree):
 
         if service.cate is not None:
             # if services have category = need to relate with device
-            ic(f"service cate not None f{service.cate}")
-
+            # ic(f"service cate not None f{service.cate}")
             for _device_id in service.cate.keys():
-                ic(service.cate[_device_id])
+                # ic(service.cate[_device_id])
                 for _device_un in service.cate[_device_id].keys():
-                    ic(_device_un)
+                    # ic(_device_un)
                     # calculate trust level from dict (action, frequency, category)
                     _action = service.cate[_device_id][_device_un]["action"]
                     _frequency = service.cate[_device_id][_device_un]["frequency"]
@@ -630,7 +777,7 @@ class CompanyTree(GraphTree):
                         if trust_key in service_category_mapping.keys()
                         else "Low trust"
                     )
-                    ic(trust_level)
+                    # ic(trust_level)
 
                     # create trust level node
                     trust_level_node = Node(
@@ -646,13 +793,18 @@ class CompanyTree(GraphTree):
                     )
 
                     # create service_type node
-                    service_type_node = Node(
-                        id="st_" + service.type,
-                        label=service.type,
-                        node_type=ServiceEnum.TYPE,
-                        visual_type=VisualNodeType.SERVICE_NORMAL,
-                    )
-
+                    id = "st_" + service.type
+                    check = [node for node in service_type_name_exist if id.replace(' ','_').lower() in node.id.lower()]
+                    if len(check)==0:
+                        service_type_node = Node(
+                            id="st_" + service.type,
+                            label=service.type,
+                            node_type=ServiceEnum.TYPE,
+                            visual_type=VisualNodeType.SERVICE_NORMAL,
+                        )
+                        service_type_name_exist.append(service_type_node)
+                    else:
+                        service_type_node =check[0]
                     current_node = tree.add_child(
                         parent_node=current_node, child_node=service_type_node
                     )
@@ -727,20 +879,112 @@ class CompanyTree(GraphTree):
                 number_service: int = len(self.get_root().children)
                 each_slot_width: int = int(screen_width / max_dept)
                 each_slot_height: int = int(screen_height / number_service)
+                node1 = []
+                node2 = []
+                node3 = []
+                relation2 = []
+                level1_name = []
+                level2_name = []
+                level3_name = []
+                for index, _child in enumerate(self.get_root().children):
+                    for index1, _child1 in enumerate(_child.children):
+                        id = _child1.id
+                        check = [name for name in level1_name if id == name]
+                        if len(check)==0:
+                            node1.append(_child1)
+                            level1_name.append(_child1.id)
+                        for index2, _child2 in enumerate(_child1.children):
+                            check = [name for name in level2_name if _child2.id == name]
+                            if len(check)==0:
+                                node2.append(_child2)
+                                level2_name.append(_child2.id)
+                            relation2.append(_child2)
+                            for index3, _child3 in enumerate(_child2.children):
+                                check = [name for name in level3_name if _child3.id == name]
+                                if len(check)==0:
+                                    node3.append(_child3)
+                                    level3_name.append(_child3.id)
                 # loop service
                 for index, _child in enumerate(self.get_root().children):
-                    data_visual_list.extend(
-                        self.gen_data_visual(
-                            top_x=top_x,
-                            top_y=top_y + (index * each_slot_height),
-                            width_slot=each_slot_width,
-                            height_slot=each_slot_height,
-                            start_node=_child,
-                            stop_node=_child,
-                            reverse=True,
-                            start_width_pos=top_x,
-                            end_width_pos=top_x + screen_width,
+                    data_visual_list.append(
+                        self.create_node_visual(
+                            id=_child.id,
+                            label=_child.label.replace("_", " "),
+                            x=(screen_width+(screen_width*15/10)),
+                            y=index*(screen_height/number_service),
+                            cls=_child.visual_type,
                         )
                     )
+                for index, _child in enumerate(node1):
+                    data_visual_list.append(
+                        self.create_node_visual(
+                            id=_child.id,
+                            label=_child.label.replace("_", " "),
+                            x=(screen_width-each_slot_width+(screen_width*15/10)),
+                            y=index*(screen_height/len(node1)),
+                            cls=_child.visual_type,
+                        )
+                    )
+                    if _child.node_type != DeviceEnum.ACTION_UNPROCESSED:
+                        parent = self.get_parent_id(_child)
+                        for id in parent:
+                            relation_dict = self.create_relation_visual(
+                                source=id,
+                                target=_child.id,
+                                cls=VisualNodeType.RELATION,
+                            )
+                            data_visual_list.append(relation_dict)
+                for index, _child in enumerate(node2): 
+                    data_visual_list.append(
+                        self.create_node_visual(
+                            id=_child.id,
+                            label=_child.label.replace("_", " "),
+                            x=(screen_width-(2*each_slot_width)+(screen_width*15/10)),
+                            y=index*(screen_height/len(node2)),
+                            cls=_child.visual_type,
+                        )
+                    )
+                for index, _child in enumerate(relation2):
+                    if _child.node_type != DeviceEnum.ACTION_UNPROCESSED:
+                        parent = self.get_parent_id(_child)
+                        for id in parent:
+                            relation_dict = self.create_relation_visual(
+                                source=id,
+                                target=_child.id,
+                                cls=VisualNodeType.RELATION,
+                            )
+                            data_visual_list.append(relation_dict)
+                for index, _child in enumerate(node3): 
+                    data_visual_list.append(
+                        self.create_node_visual(
+                            id=_child.id,
+                            label=_child.label.replace("_", " "),
+                            x=(screen_width-(3*each_slot_width)+(screen_width*15/10)),
+                            y=index*(screen_height/len(node3)),
+                            cls=_child.visual_type,
+                        )
+                    )
+                    if _child.node_type != DeviceEnum.ACTION_UNPROCESSED:
+                        parent = self.get_parent_id(_child)
+                        for id in parent:
+                            relation_dict = self.create_relation_visual(
+                                source=id,
+                                target=_child.id,
+                                cls=VisualNodeType.RELATION,
+                            )
+                            data_visual_list.append(relation_dict)
+                    # data_visual_list.extend(
+                    #     self.gen_data_visual(
+                    #         top_x=top_x,
+                    #         top_y=top_y + (index * each_slot_height),
+                    #         width_slot=each_slot_width,
+                    #         height_slot=each_slot_height,
+                    #         start_node=_child,
+                    #         stop_node=_child,
+                    #         reverse=True,
+                    #         start_width_pos=top_x,
+                    #         end_width_pos=top_x + screen_width,
+                    #     )
+                    # )
 
         return data_visual_list

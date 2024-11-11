@@ -3,13 +3,18 @@ data = {
         "0": {
             "device_name": "Gauge",
             "device_type": "Security Camera",
-            "device_unprocessed": ["Footage", "Energy usage", "Colour"],
+            "device_unprocessed": ["Footage", "Energy usage"],
             "raw_data": {
                 "Footage": {
                     "action": "Average",
                     "frequency": "Daily",
                     "sensitivity": "Low",
-                }
+                },
+                "Energy usage": {
+                    "action": "Average",
+                    "frequency": "Daily",
+                    "sensitivity": "High",
+                }, 
             },
         },
         "1": {
@@ -67,6 +72,19 @@ data = {
             "service_type": "Advertising Company",
         },
         "1": {
+            "cate_service": {
+                "0": {
+                    "Footage": {
+                        "action": "View Data",
+                        "category": "Low",
+                        "frequency": "Daily",
+                    }
+                }
+            },
+            "service_name": "Jame",
+            "service_type": "Advertising Company",
+        },
+        "2": {
             "cate_service": {
                 "1": {
                     "Energy usage": {
