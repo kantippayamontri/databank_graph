@@ -1,0 +1,71 @@
+{
+    "data": {
+        "tour": 0,
+        "devices": {
+            "0": {
+                "device_name": "sdsd",
+                "device_type": "Security Camera",
+                "device_unprocessed": [
+                    "Footage"
+                ],
+                "raw_data": {
+                    "Footage": {
+                        "action": "Average",
+                        "frequency": "Daily",
+                        "sensitivity": "Low"
+                    }
+                }
+            },
+            "1": {
+                "device_name": "2323",
+                "device_type": "Smartmetre",
+                "device_unprocessed": [
+                    "Energy usage"
+                ],
+                "raw_data": {
+                    "Energy usage": {
+                        "action": "Average",
+                        "frequency": "Daily",
+                        "sensitivity": "Low"
+                    }
+                }
+            }
+        },
+        "services": {
+            "0": {
+                "service_name": "2323",
+                "service_type": "Medical Service",
+                "cate_service": {
+                    "0": {
+                        "Footage": {
+                            "action": "View Data",
+                            "frequency": "Daily",
+                            "category": "Low"
+                        }
+                    },
+                    "1": {
+                        "Energy usage": {
+                            "action": "View Data",
+                            "frequency": "Daily",
+                            "category": "Low"
+                        }
+                    }
+                }
+            },
+            "1": {
+                "service_name": "444",
+                "service_type": "Insurance",
+                "cate_service": {
+                    "1": {
+                        "Energy usage": {
+                            "action": "View Data",
+                            "frequency": "Daily",
+                            "category": "Low"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "screenWidth": 1920
+}

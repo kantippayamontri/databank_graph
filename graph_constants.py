@@ -430,7 +430,6 @@ class HomeTree(GraphTree):
 
             each_slot_width = int(screen_width / max_depth)
             each_slot_height = screen_height
-
             # TODO: start from home node
             data_visual_list = self.gen_data_visual(
                 top_x=top_x,
