@@ -214,5 +214,5 @@ def webhook():
 
 
 if __name__ == "__main__":
-    # app.run(port=5000,)  # type: ignore
-    app.run(debug=True)
+    app.run(port=5000,)  # type: ignore
+    # app.run(debug=True)
