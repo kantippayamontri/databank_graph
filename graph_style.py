@@ -37,4 +37,40 @@ stylesheet = [
             "target-arrow-shape": "triangle",
         },
     },
+    # Node selected
+    {
+        "selector": "node:selected",
+        "style": {
+                    'width': 36, 
+                    'height': 36,
+                    'border-width': '3px',
+                    'border-color': '#10ff00',  # Red border when selected
+                    'border-style': 'solid', 
+                    "content": "data(label)"
+                },
+    },
+    {
+        "selector": "node",
+        "style": {
+                    'transition-property': 'transform',  # Enable smooth transition
+                    'transition-duration': '0.2s',  # Duration for the transition
+                },
+    },
+    # Edge selected
+    {
+        'selector': 'edge',
+        'style': {
+            'width': 2,
+        }
+    },
+    {
+        'selector': 'edge:selected',
+        'style': {
+            'width': 4,
+            'line-color': '#FF4136',
+            'target-arrow-color': '#FF4136',
+            'source-arrow-color': '#FF4136',
+            'dash-array': '5, 5'
+        }
+    },
 ]

@@ -6,7 +6,7 @@ from graph_style import stylesheet
 
 
 # TODO: making graph
-from dash import dcc, Dash, html, Input, Output, callback, no_update
+from dash import dcc, Dash, html, Input, Output, State, callback, no_update
 import dash_cytoscape as cyto
 import dash_bootstrap_components as dbc
 from flask import Flask, request, jsonify
@@ -23,6 +23,7 @@ server = Flask(__name__)
 app = Dash(__name__, server=server)
 CORS(server)
 
+default_stylesheet = [{'selector': 'edge', 'style': {'curve-style': 'bezier'}}, {'selector': '.home', 'style': {'background-color': '#3498db', 'content': 'data(label)'}}, {'selector': '.device_normal', 'style': {'background-color': '#148f77', 'content': 'data(label)'}}, {'selector': '.device_special', 'style': {'background-color': '#f39c12', 'content': 'data(label)'}}, {'selector': '.company', 'style': {'background-color': '#592720', 'content': 'data(label)'}}, {'selector': '.service_normal', 'style': {'background-color': '#e53145', 'content': 'data(label)'}}, {'selector': '[id *= "relation_"]', 'style': {'line-color': 'black', 'target-arrow-color': 'black', 'target-arrow-shape': 'triangle'}}]
 @callback(Output('databank-graph', 'elements'),
         Input('interval-component', 'n_intervals'),
         Input('databank-graph', 'elements'),
@@ -89,11 +90,8 @@ def update_metrics(n,element):
 
 app.layout = html.Div(
     [
-        # html.P(id="tapNode"),
-        # html.P(id="tapEdge"),
-        # html.P(id="mouseOverNode"),
-        # html.P(id="mouseOverEdge"),
-        html.Div(id="hover-popup", style={"position": "absolute", "display": "none"}),
+        html.Div(id="node-popup", style={"position": "absolute", "display": "none"}),
+        html.Div(id="edge-popup", style={"position": "absolute", "display": "none"}),
         cyto.Cytoscape(
             id="databank-graph",
             layout={"name": "preset", 'spacingFactor': 0.8,},
@@ -110,6 +108,7 @@ app.layout = html.Div(
             autounselectify=False,
             elements=[],
             stylesheet=stylesheet,
+            boxSelectionEnabled=True
         ),
         dcc.Interval(
             id='interval-component',
@@ -132,18 +131,28 @@ app.layout = html.Div(
 #     Output('interval-component', 'children'),
 #     Input('databank-graph', 'n_intervals'),
 # )
-@callback(
-    Output("hover-popup", "children"),
-    Output("hover-popup", "style"),
-    Input("databank-graph", "elements"),
-    Input("databank-graph", "tapNode"),
-    Input("databank-graph", "tapEdge"),
+@app.callback(
+    [
+        Output("node-popup", "children"),
+        Output("node-popup", "style"),
+        Output("edge-popup", "children"),
+        Output("edge-popup", "style"),
+        Output('databank-graph', 'selectedNodeData'),
+        Output('databank-graph', 'selectedEdgeData')
+    ],
+    [
+        Input("databank-graph", "tapNode"),
+        Input("databank-graph", "tapEdge"),
+        State("databank-graph", "elements"),
+        Input('databank-graph', 'selectedNodeData'),
+        Input('databank-graph', 'selectedEdgeData'),
+        State("edge-popup", "style")
+    ],
 )
-def display_hover_popup(elements,tapNode,tapEdge):
-    if tapNode:
-        print(tapNode)
+def display_hover_popup(tapNode,tapEdge,elements,selectedNodeData,selectedEdgeData,style_edge):
+    if selectedNodeData:
         # Content for the popup
-        content = f"Node: {tapNode.data.label}"
+        content = f"Node: {tapNode['data']['label']}"
         # Position the popup based on node position
         style = {
             "display": "block",
@@ -154,12 +163,44 @@ def display_hover_popup(elements,tapNode,tapEdge):
             "position": "absolute",
             "border": "1px solid grey",
             "borderRadius": "5px",
-            "zIndex": 1000
+            "zIndex": 1000,
+            "width": "150px",  
+            "whiteSpace": "normal",
+            "overflowWrap": "break-word",
         }
-        return content, style
-    elif tapEdge:
-        return "", {"display": "none"}
-    return "", {"display": "none"}
+        return  content, style,"", {"position":"absolute","display": "none"},None,None
+    elif selectedEdgeData:
+        # Calculate the midpoint of the edge
+        source_node = next(el for el in elements if el['data']['id'] == tapEdge['data']['source'])
+        target_node = next(el for el in elements if el['data']['id'] == tapEdge['data']['target'])
+
+        source_pos = source_node['position']
+        target_pos = target_node['position']
+
+        midpoint_x = (source_pos['x'] + target_pos['x']) / 2
+        midpoint_y = (source_pos['y'] + target_pos['y']) / 2
+
+        # Popup content and position for an edge
+        content = f"Edge: {tapEdge['data']['id']}"
+        style = style_edge.copy()
+        style.update({
+            "display": "block",
+            "left": f"{midpoint_x + 50}px",  
+            "top": f"{midpoint_y + 10}px",
+            "backgroundColor": "lightgrey",
+            "padding": "5px",
+            "position": "absolute",
+            "border": "1px solid grey",
+            "borderRadius": "5px",
+            "zIndex": 1000,
+            "width": "250px",  # Set a fixed width
+            "whiteSpace": "normal",  # Allow text to wrap
+            "overflowWrap": "break-word",
+        })
+        return "", {"position":"absolute","display": "none"},content, style,None,None
+    return "", {"position":"absolute","display": "none"},"", {"position":"absolute","display": "none"},None,None
+
+
 
 @server.route("/webhook", methods=['POST'])
 def webhook():
@@ -214,5 +255,5 @@ def webhook():
 
 
 if __name__ == "__main__":
-    app.run(port=5000,)  # type: ignore
-    # app.run(debug=True)
+    # app.run(port=5000,)  # type: ignore
+    app.run(debug=True)
