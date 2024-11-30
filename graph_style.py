@@ -73,4 +73,32 @@ stylesheet = [
             'dash-array': '5, 5'
         }
     },
+    # Edge selected does not filter
+    # {
+    #     'selector': 'edge .not_select',
+    #     'style': {
+    #         'width': 4,
+    #         'line-color': '#D0D0D0',
+    #         'target-arrow-color': '#D0D0D0',
+    #         'source-arrow-color': '#D0D0D0',
+    #         'dash-array': '5, 5'
+    #     }
+    # },
+    #node does not filter
+    {
+        'selector': 'node.not_select',
+        'style': {
+            "background-color": "#D0D0D0", 
+            "content": "data(label)",
+            'color': '#D0D0D0',
+        }
+    },
+    {
+        'selector': 'edge.not_select',
+        'style': {
+            'line-color': '#D0D0D0',
+            'target-arrow-color': '#D0D0D0',
+            'source-arrow-color': '#D0D0D0',
+        }
+    },
 ]

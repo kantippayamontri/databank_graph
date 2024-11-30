@@ -3,28 +3,101 @@
         "tour": 0,
         "devices": {
             "0": {
-                "device_name": "323",
+                "device_name": "1221",
                 "device_type": "Security Camera",
                 "device_unprocessed": [
-                    "Light status"
+                    "Footage"
                 ],
                 "raw_data": {
-                    "Light status": {
+                    "Footage": {
                         "action": "Average",
                         "frequency": "Daily",
                         "sensitivity": "Low"
+                    }
+                }
+            },
+            "1": {
+                "device_name": "123",
+                "device_type": "Smartmetre",
+                "device_unprocessed": [
+                    "Energy usage",
+                    "Footage"
+                ],
+                "raw_data": {
+                    "Energy usage": {
+                        "action": "Average",
+                        "frequency": "Daily",
+                        "sensitivity": "Low"
+                    },
+                    "Footage": {
+                        "action": "Average",
+                        "frequency": "Daily",
+                        "sensitivity": "Medium"
+                    }
+                }
+            },
+            "2": {
+                "device_name": "sdsd",
+                "device_type": "Security Camera",
+                "device_unprocessed": [
+                    "Notification",
+                    "Activity period"
+                ],
+                "raw_data": {
+                    "Notification": {
+                        "action": "Average",
+                        "frequency": "Daily",
+                        "sensitivity": "High"
                     }
                 }
             }
         },
         "services": {
             "0": {
-                "service_name": "323",
+                "service_name": "dsd",
                 "service_type": "Advertising Company",
                 "cate_service": {
                     "0": {
-                        "Light status": {
+                        "Footage": {
                             "action": "View Data",
+                            "frequency": "Daily",
+                            "category": "Low"
+                        }
+                    },
+                    "2": {
+                        "Notification": {
+                            "action": "View Data",
+                            "frequency": "Daily",
+                            "category": "High"
+                        }
+                    }
+                }
+            },
+            "1": {
+                "service_name": "new 2",
+                "service_type": "Advertising Company",
+                "cate_service": {
+                    "1": {
+                        "Energy usage": {
+                            "action": "Read Data",
+                            "frequency": "Daily",
+                            "category": "Low"
+                        },
+                        "Footage": {
+                            "action": "Report Data",
+                            "frequency": "Daily",
+                            "category": "Low"
+                        }
+                    }
+                }
+            },
+            "2": {
+                "service_name": "health1",
+                "service_type": "Health Tracking Service",
+                "cate_service": {
+                    "1": {
+                        "Energy usage": {
+                            "action": "Read Data",
                             "frequency": "Daily",
                             "category": "Low"
                         }
@@ -33,5 +106,6 @@
             }
         }
     },
-    "screenWidth": 1920
+    "screenWidth": 1920,
+    "screenHeight": 800
 }
