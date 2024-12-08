@@ -193,7 +193,8 @@ class GraphTree:
                 # check is id of children is redundant?
                 if child_node.id not in self.get_child_id(node=_parent_node):
                     _parent_node.children.append(child_node)
-            
+                    # if 's_2_st_Low_trust_Authority_false_false_false'==_parent_node.id:
+                    #     print(len(_parent_node.children))
         return child_node
 
     def add_mul_child(self, parent_node: Node, child_node: list[Node]):
@@ -539,15 +540,26 @@ class HomeTree(GraphTree):
                 height = (screen_height/len(node3))
                 if height<60:
                     height=60
-                data_visual_list.append(
-                    self.create_node_visual(
-                        id=_child.id,
-                        label=_child.label.replace("_", " "),
-                        x=(3*each_slot_width),
-                        y=(index*height),
-                        cls=_child.visual_type,
+                if index%2==1:
+                    data_visual_list.append(
+                        self.create_node_visual(
+                            id=_child.id,
+                            label=_child.label.replace("_", " "),
+                            x=(5*each_slot_width),
+                            y=(index*height),
+                            cls=_child.visual_type,
+                        )
                     )
-                )
+                else:
+                    data_visual_list.append(
+                        self.create_node_visual(
+                            id=_child.id,
+                            label=_child.label.replace("_", " "),
+                            x=(3*each_slot_width),
+                            y=(index*height),
+                            cls=_child.visual_type,
+                        )
+                    )
                 if _child.node_type != DeviceEnum.ACTION_UNPROCESSED:
                     parent = self.get_parent_id(_child)
                     for id in parent:
@@ -731,14 +743,15 @@ class CompanyTree(GraphTree):
         self,
     ):
         service_type_name_exist = []
+        list_service_type_node = []
         for _service in self.services:
-            service_tree: GraphTree = self.create_service_tree(service=_service,service_type_name_exist=service_type_name_exist)
+            service_tree: GraphTree = self.create_service_tree(service=_service,service_type_name_exist=service_type_name_exist,list_service_type_node=list_service_type_node)
             if service_tree is not None:
                 _ = self.add_child(
                     parent_node=self.get_root(), child_node=service_tree.get_root()
                 )
 
-    def create_service_tree(self, service: Service,service_type_name_exist):
+    def create_service_tree(self, service: Service,service_type_name_exist,list_service_type_node):
         if service is None:
             return None
 
@@ -754,7 +767,6 @@ class CompanyTree(GraphTree):
         )
 
         # TODO: need to check cate of service -> need to device trust as second node
-
         if service.cate is not None:
             # if services have category = need to relate with device
             # ic(f"service cate not None f{service.cate}")
@@ -766,56 +778,64 @@ class CompanyTree(GraphTree):
                     _action = service.cate[_device_id][_device_un]["action"]
                     _frequency = service.cate[_device_id][_device_un]["frequency"]
                     _category = service.cate[_device_id][_device_un]["category"]
+                    if 'holiday' in service.cate[_device_id][_device_un]:
+                        _holiday = service.cate[_device_id][_device_un]["holiday"]
+                        _night = service.cate[_device_id][_device_un]["night"]
+                        _home = service.cate[_device_id][_device_un]["home"]
+                    else:
+                        _holiday = ""
+                        _night = ""
+                        _home = ""
                     trust_key = (_action, _frequency, _category)
                     trust_level = (
                         service_category_mapping[trust_key]
                         if trust_key in service_category_mapping.keys()
                         else "Low trust"
                     )
-                    # ic(trust_level)
+                    # # ic(trust_level)
 
-                    # create trust level node
-                    trust_level_node = Node(
-                        id="tl_" + trust_level+"_"+_action,
-                        label=trust_level,
-                        node_type=ServiceEnum.TRUST_LEVEL,
-                        visual_type=VisualNodeType.SERVICE_TRUST,
-                    )
+                    # # create trust level node
+                    # trust_level_node = Node(
+                    #     id="tl_" + trust_level+"_"+_action,
+                    #     label=trust_level,
+                    #     node_type=ServiceEnum.TRUST_LEVEL,
+                    #     visual_type=VisualNodeType.SERVICE_TRUST,
+                    # )
 
-                    current_node = tree.add_child(
-                        parent_node=tree.get_root(),
-                        child_node=trust_level_node,
-                    )
+                    # current_node = tree.add_child(
+                    #     parent_node=tree.get_root(),
+                    #     child_node=trust_level_node,
+                    # )
 
                     # create service_type node
                     # id = "st_" + service.type
                     # check = [node for node in service_type_name_exist if id.replace(' ','_').lower() in node.id.lower()]
                     # if len(check)==0:
-                    service_type_node = Node(
-                        id="st_" + service.type,
-                        label=service.type,
-                        node_type=ServiceEnum.TYPE,
-                        visual_type=VisualNodeType.SERVICE_TYPE,
-                    )
-                    #     service_type_name_exist.append(service_type_node)
-                    # else:
-                    #     service_type_node =check[0]
-                    current_node = tree.add_child(
-                        parent_node=current_node, child_node=service_type_node
-                    )
-
-                    # create action node
+                    service_type_node_id="st_" +trust_level.replace(" ","_") + "_" +service.type.replace(" ","_")+"_"+_holiday+"_"+_night+"_"+_home
+                    node = [item for item in list_service_type_node if service_type_node_id in item.id]
+                    if len(node)==0:
+                        service_type_node = Node(
+                            id=service_type_node_id,
+                            label=trust_level+" "+service.type,
+                            node_type=ServiceEnum.TYPE,
+                            visual_type=VisualNodeType.SERVICE_TYPE,
+                        )
+                        current_node_type = tree.add_child(
+                            parent_node=tree.get_root(),
+                            child_node=service_type_node,
+                        )
+                        list_service_type_node.append(service_type_node)
+                    else:
+                        current_node_type=node[0]
                     service_action_node = Node(
                         id="sa_" + _action,
                         label=_action,
                         node_type=ServiceEnum.ACTION,
                         visual_type=VisualNodeType.SERVICE_ACTION,
                     )
-
                     current_node = tree.add_child(
-                        parent_node=current_node, child_node=service_action_node
+                        parent_node=current_node_type, child_node=service_action_node
                     )
-
                     # TODO: create relation with device
 
         else:
@@ -877,11 +897,9 @@ class CompanyTree(GraphTree):
                 each_slot_height=90
             node1 = []
             node2 = []
-            node3 = []
             relation2 = []
             level1_name = []
             level2_name = []
-            level3_name = []
             total_height = 0
             for index, _child in enumerate(self.get_root().children):
                 for index1, _child1 in enumerate(_child.children):
@@ -891,36 +909,17 @@ class CompanyTree(GraphTree):
                         node1.append(_child1)
                         level1_name.append(_child1.id)
                     for index2, _child2 in enumerate(_child1.children):
-                        check = [name for name in level2_name if _child2.id == name]
-                        if len(check)==0:
+                        check2 = [name for name in level2_name if _child2.id == name]
+                        if len(check2)==0:
                             node2.append(_child2)
                             level2_name.append(_child2.id)
                         relation2.append(_child2)
-                        for index3, _child3 in enumerate(_child2.children):
-                            check = [name for name in level3_name if _child3.id == name]
-                            if len(check)==0:
-                                node3.append(_child3)
-                                level3_name.append(_child3.id)
             # loop service
-            
-            for index, _child in enumerate(node1):
-                height = (screen_height/len(node1))
-                if height<90:
-                    height=90
-                total_height += height
-                data_visual_list.append(
-                    self.create_node_visual(
-                        id=_child.id,
-                        label=_child.label.replace("_", " "),
-                        x=(screen_width-(1.25*each_slot_width)+(screen_width*15/10)),
-                        y=(index*height),
-                        cls=_child.visual_type,
-                    )
-                )
             for index, _child in enumerate(node2): 
                 height = (screen_height/len(node2))
                 if height<90:
                     height=90
+                total_height += height
                 data_visual_list.append(
                     self.create_node_visual(
                         id=_child.id,
@@ -930,29 +929,21 @@ class CompanyTree(GraphTree):
                         cls=_child.visual_type,
                     )
                 )
-            for index, _child in enumerate(relation2):
-                if _child.node_type != DeviceEnum.ACTION_UNPROCESSED:
-                    parent = self.get_parent_id(_child)
-                    for id in parent:
-                        relation_dict = self.create_relation_visual(
-                            source=id,
-                            target=_child.id,
-                            cls=VisualNodeType.RELATION_SERVICE,
-                        )
-                        data_visual_list.append(relation_dict)
-            for index, _child in enumerate(node3): 
-                height = (screen_height/len(node3))
+            for index, _child in enumerate(node1):
+                height = (total_height/len(node1))
                 if height<90:
                     height=90
                 data_visual_list.append(
                     self.create_node_visual(
                         id=_child.id,
                         label=_child.label.replace("_", " "),
-                        x=(screen_width-(3.75*each_slot_width)+(screen_width*15/10)),
+                        x=(screen_width-(1.25*each_slot_width)+(screen_width*15/10)),
                         y=(index*height),
                         cls=_child.visual_type,
                     )
                 )
+            
+            for index, _child in enumerate(relation2):
                 if _child.node_type != DeviceEnum.ACTION_UNPROCESSED:
                     parent = self.get_parent_id(_child)
                     for id in parent:

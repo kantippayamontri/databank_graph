@@ -129,12 +129,18 @@
                         "Viewing Habits": {
                             "action": "Read Data",
                             "frequency": "Daily",
-                            "category": "High"
+                            "category": "Low",
+                            "holiday": "true",
+                            "night": "true",
+                            "home": "true"
                         },
                         "Voice and Interaction Data": {
                             "action": "View Data",
                             "frequency": "Daily",
-                            "category": "Low"
+                            "category": "Low",
+                            "holiday": "true",
+                            "night": "false",
+                            "home": "false"
                         }
                     },
                     "2": {
@@ -186,24 +192,36 @@
                         "Footage": {
                             "action": "View Data",
                             "frequency": "Daily",
-                            "category": "Medium"
+                            "category": "Medium",
+                            "holiday": "false",
+                            "night": "false",
+                            "home": "false"
                         },
                         "Motion and Activity Data": {
                             "action": "Send Notification",
                             "frequency": "Daily",
-                            "category": "High"
+                            "category": "High",
+                            "holiday": "false",
+                            "night": "false",
+                            "home": "false"
                         },
                         "Audio Data": {
                             "action": "View Data",
                             "frequency": "Daily",
-                            "category": "High"
+                            "category": "High",
+                            "holiday": "false",
+                            "night": "false",
+                            "home": "false"
                         }
                     },
                     "2": {
                         "Device Information": {
-                            "action": "View Data",
+                            "action": "Read Data",
                             "frequency": "Daily",
-                            "category": "Low"
+                            "category": "Medium",
+                            "holiday": "false",
+                            "night": "false",
+                            "home": "false"
                         }
                     }
                 }

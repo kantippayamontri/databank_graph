@@ -175,7 +175,9 @@ def create_relation_service_device(home: HomeTree | None = None, company: Compan
                                             if trust_key in service_category_mapping.keys()
                                             else "Low trust"
                                         )
-                                        if services[service_id]["service_type"].replace(" ","_") in se_leaf.id and services[service_id]['cate_service'][service_device_id][data_cat]["action"].replace(' ','_') in se_leaf.id and ("tl_" +trust_level).replace(' ','_') in se_leaf.id:
+                                        # if data_cat == device_unprocessed == "Device Information" and device_id == service_device_id:
+                                        #         print(services[service_id]['cate_service'][service_device_id][data_cat]["action"].replace(' ','_')  +"------------------"+("st_" +trust_level).replace(' ','_') +",,,,,,,,,"+ se_leaf.id)
+                                        if services[service_id]["service_type"].replace(" ","_") in se_leaf.id and services[service_id]['cate_service'][service_device_id][data_cat]["action"].replace(' ','_') in se_leaf.id and ("st_" +trust_level).replace(' ','_') in se_leaf.id:
                                             for de_leaf in device_leaf:
                                                 sen_key = (
                                                     devices[device_id]["raw_data"][device_unprocessed]["action"],

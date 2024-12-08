@@ -245,8 +245,8 @@ def update_metrics(n,element):
         screen_width = datanew["screenWidth"]
         screen_heigth = datanew["screenHeight"]
         #def devide screen size for device and service
-        device_screen_width = int(3*screen_width / 5)
-        service_screen_width = int(2*screen_width / 5)
+        device_screen_width = int(5*screen_width / 8)
+        service_screen_width = int(3*screen_width / 8)
         device_screen_height = service_screen_heigth = screen_heigth
 
         devices, services = create_elements(data) # get devices and services from data
