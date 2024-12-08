@@ -6,3 +6,7 @@ how to run the program
 
 usefull resources
 1. https://dash.plotly.com/cytoscape
+
+//run ducker
+docker run -d -p 80:8080 jame25193/databank 
+docker run -d -p 80:8080 jame25193/databank_graph

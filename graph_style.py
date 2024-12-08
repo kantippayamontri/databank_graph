@@ -15,8 +15,24 @@ stylesheet = [
         "style": {"background-color": "#148f77", "content": "data(label)"},
     },
     {
+        "selector": ".device_type",
+        "style": {"background-color": "#8f7714", "content": "data(label)"},
+    },
+    {
+        "selector": ".device_action_1",
+        "style": {"background-color": "#77148f", "content": "data(label)"},
+    },
+    {
+        "selector": ".device_action_2",
+        "style": {"background-color": "#146a8f", "content": "data(label)"},
+    },
+    {
         "selector": ".device_special",
         "style": {"background-color": "#f39c12", "content": "data(label)"},
+    },
+    {
+        "selector": ".device_special_2",
+        "style": {"background-color": "#85C024", "content": "data(label)"},
     },
     # Company node
     {
@@ -27,6 +43,19 @@ stylesheet = [
     {
         "selector": ".service_normal",
         "style": {"background-color": "#e53145", "content": "data(label)"},
+    },
+
+    {
+        "selector": ".service_trust",
+        "style": {"background-color": "#d131e5", "content": "data(label)"},
+    },
+    {
+        "selector": ".service_type",
+        "style": {"background-color": "#e5319f", "content": "data(label)"},
+    },
+    {
+        "selector": ".service_action",
+        "style": {"background-color": "#3145e5", "content": "data(label)"},
     },
     # Device relation
     {
