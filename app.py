@@ -53,80 +53,114 @@ def update_metrics(n,element):
             data['classes'] = data['classes'].replace(' not_select', '')
             no_filter_data.append(data.copy())
         data_element = []
-        use_element = []
-        use_element = element.copy()
+        use_element = no_filter_data.copy()
         if filter_type[0] != None:
             data=[]
             company_pair = []
             new_element = use_element.copy()[::-1]
-            for result in new_element:
+            service_data = list()
+            service_array = list()
+            service_sa_array = list()
+            for results in new_element:
+                result = results.copy()
                 if ' not_select' in result['classes']:
                     result['classes'] = result['classes'].replace(' not_select', '')
                 if result['classes'] == 'device_relation':
-                    if not ('d_'+new_value[0] in str(result['data']['target']) and 'd_'+new_value[0] in str(result['data']['source'])) :
+                    if not ('#device_'+new_value[0] in str(result['route']) and '#device_'+new_value[0] in str(result['route'])) :
                         result['classes'] = result['classes']+" not_select"
-                if result['classes'] == 'between_relation':
-                    if 'd_'+new_value[0] in str(result['data']['target']):
-                        company_pair.append(result['data']['source'])
+                elif result['classes'] == 'between_relation':
+                    if '#device_'+new_value[0] not in str(result['route']):
+                        result['classes'] = result['classes']+" not_select"
                     else:
+                        ser_data = result['route'].split("&&")[1]
+                        service_data.append(ser_data)
+                        data_show = ser_data.split('_sa_')
+                        service_array.append(data_show[0])
+                        service_sa_array.append(ser_data)
+                        service_array = list(set(service_array))
+                        service_sa_array = list(set(service_sa_array))
+                elif result['classes'] == 'device_normal' or result['classes'] == 'between_relation' or result['classes'] == 'device_special' or result['classes'] == 'device_type' or result['classes'] == 'device_action_1' or result['classes'] == 'device_action_2' or result['classes'] == 'device_special_2':
+                    if '#device_'+new_value[0] not in str(result['route']) and len([item for item in company_pair if item in str(result['route'])])==0:
                         result['classes'] = result['classes']+" not_select"
-                elif result['classes'] == 'device_normal' or result['classes'] == 'between_relation' or result['classes'] == 'device_special':
-                    if 'd_'+new_value[0] not in str(result['data']['id']) and len([item for item in company_pair if item in str(result['data']['id'])])==0:
-                        result['classes'] = result['classes']+" not_select"
+                elif result['route'] in service_data:
+                    print('-')
+                elif result['classes'] == 'service_relation' or result['classes'] == 'service_normal' or result['classes'] == 'service_trust'  or result['classes'] == 'service_type'  or result['classes'] == 'service_action':
+                    if '_sa_' in result['route']:
+                        if result['route'] not in service_sa_array:
+                            result['classes'] = result['classes']+" not_select"
+                    elif '_#type_' not in result['route']:
+                        data_show = result['route'].split('_#type_')[0]
+                        if len([data for data in service_array if data_show in data])==0:
+                            result['classes'] = result['classes']+" not_select"
+                    else:
+                        if result['route'] not in service_array:
+                            result['classes'] = result['classes']+" not_select"
                 data.append(result.copy())
-            new_data = []
-            for result in data:
-                if result['classes'] == 'service_relation':
-                    if len([item for item in company_pair if item in result['data']['target']])>0:
-                        company_pair.append(result['data']['source'])
-                    else:
-                        result['classes'] = result['classes']+" not_select"
-                if result['classes'] == 'service_normal':
-                    if len([item for item in company_pair if item in result['data']['id']])>0:
-                        company_pair.append(result['data']['id'])
-                    else:
-                        result['classes'] = result['classes']+" not_select"
-                new_data.append(result.copy())
-            new_data = new_data[::-1]
+            new_data = data[::-1]
             data_element.append(new_data.copy())
+
         else:
             data_element.append(use_element.copy())
         if filter_type[1] != None:
             data=[]
             company_pair = []
             new_element = use_element.copy()[::-1]
-            for result in new_element:
+            service_data = list()
+            service_array = list()
+            service_sa_array = list()
+            device_id = list()
+            for results in new_element:
+                result = results.copy()
                 if ' not_select' in result['classes']:
                     result['classes'] = result['classes'].replace(' not_select', '')
                 if result['classes'] == 'device_relation':
-                    if new_value[1] in str(result['data']['target']) and new_value[1] not in str(result['data']['source']):
-                        company_pair.append(result['data']['source'])
-                    elif not (new_value[1] in str(result['data']['target']) and new_value[1] in str(result['data']['source'])) :
+                    if not (new_value[1] in str(result['route']) and new_value[1] in str(result['route'])) :
                         result['classes'] = result['classes']+" not_select"
-                if result['classes'] == 'between_relation':
-                    if new_value[1] in str(result['data']['target']):
-                        company_pair.append(result['data']['source'])
                     else:
+                        data_show = result['route'].split('#device_')[1]
+                        data_show = data_show.split('_un_')[0]
+                        device_id.append(data_show)
+                        device_id = list(set(device_id))
+                elif result['classes'] == 'between_relation':
+                    if new_value[1] not in str(result['route']):
                         result['classes'] = result['classes']+" not_select"
-                elif result['classes'] == 'device_normal' or result['classes'] == 'between_relation' or result['classes'] == 'device_special':
-                    if new_value[1] not in str(result['data']['id']) and len([item for item in company_pair if item in str(result['data']['id'])])==0:
+                    else:
+                        ser_data = result['route'].split("&&")[1]
+                        service_data.append(ser_data)
+                        data_show = ser_data.split('_sa_')
+                        service_array.append(data_show[0])
+                        service_sa_array.append(ser_data)
+                        service_array = list(set(service_array))
+                        service_sa_array = list(set(service_sa_array))
+                elif result['classes'] == 'device_normal' or result['classes'] == 'between_relation' or result['classes'] == 'device_special' or result['classes'] == 'device_type' or result['classes'] == 'device_action_1' or result['classes'] == 'device_action_2' or result['classes'] == 'device_special_2':
+                    if new_value[1] not in str(result['route']) and len([item for item in company_pair if item in str(result['route'])])==0:
                         result['classes'] = result['classes']+" not_select"
+                elif result['route'] in service_data:
+                    print('-')
+                elif result['classes'] == 'service_relation' or result['classes'] == 'service_normal' or result['classes'] == 'service_trust'  or result['classes'] == 'service_type'  or result['classes'] == 'service_action':
+                    if '#st_' in result['route']:
+                        data_show = result['route'].split('#st_')[1]
+                        data_show = data_show.split('#_sa_')[0]
+                        if len([data for data in service_sa_array if data_show in data])==0:
+                            result['classes'] = result['classes']+" not_select"
+                    elif '_sa_' in result['route']:
+                        if result['route'] not in service_sa_array:
+                            result['classes'] = result['classes']+" not_select"
+                    elif '_#type_' not in result['route']:
+                        data_show = result['route'].split('_#type_')[0]
+                        if len([data for data in service_array if data_show in data])==0:
+                            result['classes'] = result['classes']+" not_select"
+                    else:
+                        if result['route'] not in service_array:
+                            result['classes'] = result['classes']+" not_select"
                 data.append(result.copy())
-            new_data = []
-            for result in data:
-                if result['classes'] == 'device_normal':
-                    if new_value[1] not in str(result['data']['id']) and len([item for item in company_pair if item == str(result['data']['id'])])==0:
-                        result['classes'] = result['classes']+" not_select"
-                if result['classes'] == 'service_relation':
-                    if len([item for item in company_pair if item in result['data']['target']])>0:
-                        company_pair.append(result['data']['source'])
-                    else:
-                        result['classes'] = result['classes']+" not_select"
-                if result['classes'] == 'service_normal':
-                    if len([item for item in company_pair if item in result['data']['id']])>0:
-                        company_pair.append(result['data']['id'])
-                    else:
-                        result['classes'] = result['classes']+" not_select"
+            new_data = list()
+            for results in data:
+                result = results.copy()
+                if result['classes'] == 'device_normal not_select':
+                    if '_un_' not in result['route']:
+                        if str(result['route'].split('#device_')[1]) in device_id:
+                            result['classes'] = result['classes'].replace(' not_select', '')
                 new_data.append(result.copy())
             new_data = new_data[::-1]
             data_element.append(new_data.copy())
@@ -136,86 +170,148 @@ def update_metrics(n,element):
             data=[]
             device_pair = []
             new_element = use_element.copy()[::-1]
-            for result in new_element:
+            device_data = list()
+            device_array = list()
+            device_un_array = list()
+            for results in new_element:
+                result = results
                 if ' not_select' in result['classes']:
                     result['classes'] = result['classes'].replace(' not_select', '')
                 if result['classes'] == 'service_relation':
-                    if not ('s_'+new_value[2] in str(result['data']['source']) and 's_'+new_value[2] in str(result['data']['target'])) :
+                    if not ("#service_"+new_value[2] in str(result['route'])) :
                         result['classes'] = result['classes']+" not_select"
-                if result['classes'] == 'between_relation':
-                    if 's_'+new_value[2] in str(result['data']['source']):
-                        device_pair.append(result['data']['target'])
+                elif result['classes'] == 'between_relation':
+                    if "#service_"+new_value[2] not in str(result['route']):
+                        result['classes'] = result['classes']+" not_select"
                     else:
+                        dev_data = result['route'].split("&&")[0]
+                        device_data.append(dev_data)
+                        data_show = dev_data.split('_un_')
+                        device_array.append(data_show[0])
+                        device_un_array.append(data_show[1])
+                        device_array = list(set(device_array))
+                        device_un_array = list(set(device_un_array))
+                        device_data = list(set(device_data))
+                elif result['classes'] == 'service_normal' or result['classes'] == 'service_trust' or result['classes'] == 'service_type' or result['classes'] == 'service_action':
+                    if "#service_"+new_value[2] not in str(result['route']):
                         result['classes'] = result['classes']+" not_select"
-                elif result['classes'] == 'service_normal' or result['classes'] == 'between_relation':
-                    if 's_'+new_value[2] not in str(result['data']['id']) and len([item for item in device_pair if item in str(result['data']['id'])])==0:
-                        result['classes'] = result['classes']+" not_select"
+                elif result['route'] in device_data:
+                    print('-')
+                elif '_un_' not in result['route']:
+                        dev_device = result['route'].split('#device_')[1]
+                        if len([item for item in device_array if '#device_'+dev_device in item])==0:
+                            result['classes'] = result['classes']+" not_select"
+                else:
+                    dev_un='&--'
+                    dev_sen='&--'
+                    dev_at='&--'
+                    dev_atun='&--'
+                    dev_device = result['route'].split('#device_')[1]
+                    dev_device = dev_device.split('_un_')[0]
+                    if "#atun_" in result['route']:
+                        dev_atun = result['route'].split('#atun_')[1]
+                    if "#at_" in result['route']:
+                        dev_data = result['route'].split('#at_')[1]
+                        dev_at = dev_data.split('#atun_')[0]
+                    if "#sen_" in result['route']:
+                        dev_data = result['route'].split('#sen_')[1]
+                        dev_sen = dev_data.split('#at_')[0]
+                    if "_un_" in result['route']:
+                        dev_data = result['route'].split('_un_')[1]
+                        dev_un = dev_data.split('#')[0]
+                    if (dev_sen == '&--' and dev_at == '&--' and dev_atun == '&--'):
+                        if len([item for item in device_un_array if dev_un in item])==0:
+                            result['classes'] = result['classes']+" not_select"
+                        elif not(len([item for item in device_data if '#device_'+dev_device in item and dev_un in item])>0):
+                            result['classes'] = result['classes']+" not_select"
+                    else :
+                        if not((len([item for item in device_un_array if dev_un in item])>0) and (len([item for item in device_un_array if dev_sen in item])>0 or len([item for item in device_un_array if dev_at in item])>0 or len([item for item in device_un_array if dev_atun in item])>0)):
+                            result['classes'] = result['classes']+" not_select"
+                        elif not(len([item for item in device_data if '#device_'+dev_device in item and dev_un in item])>0):
+                            result['classes'] = result['classes']+" not_select"
                 data.append(result.copy())
-            new_data = []
-            for result in data:
-                if result['classes'] == 'device_normal':
-                    if len([item for item in device_pair if item in result['data']['id']])>0:
-                        device_pair.append(result['data']['id'])
-                    else:
-                        result['classes'] = result['classes']+" not_select"
-                if result['classes'] == 'device_relation':
-                    if len([item for item in device_pair if item in result['data']['target']])>0:
-                        device_pair.append(result['data']['source'])
-                    else:
-                        result['classes'] = result['classes']+" not_select"
-                if result['classes'] == 'device_special':
-                    if 's_'+new_value[2] not in str(result['data']['id']) and len([item for item in device_pair if item in str(result['data']['id'])])==0:
-                        result['classes'] = result['classes']+" not_select"
-                new_data.append(result.copy())
-            new_data = new_data[::-1]
+            new_data = data[::-1]
             data_element.append(new_data.copy())
         else:
             data_element.append(use_element.copy())
         if filter_type[3] != None:
             data=[]
-            device_pair = []
             new_element = use_element.copy()[::-1]
-            for result in new_element:
+            device_data = list()
+            device_array = list()
+            device_un_array = list()
+            service_id = list()
+            route_array = list()
+            for results in new_element:
+                result = results.copy()
                 if ' not_select' in result['classes']:
                     result['classes'] = result['classes'].replace(' not_select', '')
                 if result['classes'] == 'service_relation':
-                    if not (new_value[3] in str(result['data']['source']) and new_value[3] in str(result['data']['target'])) :
-                        if new_value[3] in str(result['data']['target']) or len([item for item in device_pair if item in result['data']['target']])>0:
-                            device_pair.append(result['data']['source'])
-                        else:
+                    if not (new_value[3] in str(result['route'])) :
+                        result['classes'] = result['classes']+" not_select"
+                    else:
+                        data_show = result['route'].split('#service_')[1]
+                        data_show = data_show.split('_#type_')[0]
+                        service_id.append(data_show)
+                        service_id = list(set(service_id))
+                        route_array = list(set(route_array))
+                elif result['classes'] == 'between_relation':
+                    if new_value[3] not in str(result['route']):
+                        result['classes'] = result['classes']+" not_select"
+                    else:
+                        dev_data = result['route'].split("&&")[0]
+                        device_data.append(dev_data)
+                        data_show = dev_data.split('_un_')
+                        device_array.append(data_show[0])
+                        device_un_array.append(data_show[1])
+                        device_array = list(set(device_array))
+                        device_un_array = list(set(device_un_array))
+                        device_data = list(set(device_data))
+                elif result['classes'] == 'service_normal' or result['classes'] == 'service_trust' or result['classes'] == 'service_type' or result['classes'] == 'service_action':
+                    if new_value[3] not in str(result['route']):
+                        result['classes'] = result['classes']+" not_select"
+                elif result['route'] in device_data:
+                    print('-')
+                elif '_un_' not in result['route']:
+                        dev_device = result['route'].split('#device_')[1]
+                        if len([item for item in device_array if '#device_'+dev_device in item])==0:
                             result['classes'] = result['classes']+" not_select"
-                if result['classes'] == 'between_relation':
-                    if new_value[3] in str(result['data']['source']):
-                        device_pair.append(result['data']['target'])
-                    else:
-                        result['classes'] = result['classes']+" not_select"
-                elif result['classes'] == 'service_normal' or result['classes'] == 'between_relation':
-                    if new_value[3] not in str(result['data']['id']) and len([item for item in device_pair if item in str(result['data']['id'])])==0:
-                        result['classes'] = result['classes']+" not_select"
+                else:
+                    dev_un='&--'
+                    dev_sen='&--'
+                    dev_at='&--'
+                    dev_atun='&--'
+                    dev_device = result['route'].split('#device_')[1]
+                    dev_device = dev_device.split('_un_')[0]
+                    if "#atun_" in result['route']:
+                        dev_atun = result['route'].split('#atun_')[1]
+                    if "#at_" in result['route']:
+                        dev_data = result['route'].split('#at_')[1]
+                        dev_at = dev_data.split('#atun_')[0]
+                    if "#sen_" in result['route']:
+                        dev_data = result['route'].split('#sen_')[1]
+                        dev_sen = dev_data.split('#at_')[0]
+                    if "_un_" in result['route']:
+                        dev_data = result['route'].split('_un_')[1]
+                        dev_un = dev_data.split('#')[0]
+                    if (dev_sen == '&--' and dev_at == '&--' and dev_atun == '&--'):
+                        if len([item for item in device_un_array if dev_un in item])==0:
+                            result['classes'] = result['classes']+" not_select"
+                        elif not(len([item for item in device_data if '#device_'+dev_device in item and dev_un in item])>0):
+                            result['classes'] = result['classes']+" not_select"
+                    else :
+                        if not((len([item for item in device_un_array if dev_un in item])>0) and (len([item for item in device_un_array if dev_sen in item])>0 or len([item for item in device_un_array if dev_at in item])>0 or len([item for item in device_un_array if dev_atun in item])>0)):
+                            result['classes'] = result['classes']+" not_select"
+                        elif not(len([item for item in device_data if '#device_'+dev_device in item and dev_un in item])>0):
+                            result['classes'] = result['classes']+" not_select"
                 data.append(result.copy())
-            new_data = []
-            for result in data:
-                # if result['classes'] == 'service_relation not_select':
-                #     if len([item for item in device_pair if item in result['data']['target']])>0:
-                #         result['classes'] = result['classes'].replace(' not_select','')
-                #         device_pair.append(result['data']['source'])
-                # if result['classes'] == 'service_normal not_select':
-                #     if len([item for item in device_pair if item in str(result['data']['id'])])>0:
-                #         result['classes'] = result['classes'].replace(' not_select','')
-                #         device_pair.append(result['data']['id'])
-                if result['classes'] == 'device_normal':
-                    if len([item for item in device_pair if item in result['data']['id']])>0:
-                        device_pair.append(result['data']['id'])
-                    else:
-                        result['classes'] = result['classes']+" not_select"
-                if result['classes'] == 'device_relation':
-                    if len([item for item in device_pair if item in result['data']['target']])>0:
-                        device_pair.append(result['data']['source'])
-                    else:
-                        result['classes'] = result['classes']+" not_select"
-                if result['classes'] == 'device_special':
-                    if 's_'+new_value[3] not in str(result['data']['id']) and len([item for item in device_pair if item in str(result['data']['id'])])==0:
-                        result['classes'] = result['classes']+" not_select"
+            new_data = list()
+            for results in data:
+                result = results.copy()
+                if result['classes'] == 'service_normal not_select':
+                    if '_#type_' not in result['route']:
+                        if str(result['route'].split('#service_')[1]) in service_id:
+                            result['classes'] = result['classes'].replace(' not_select', '')
                 new_data.append(result.copy())
             new_data = new_data[::-1]
             data_element.append(new_data.copy())
@@ -226,7 +322,7 @@ def update_metrics(n,element):
         for data in use_element:
             if not(data_element[0][index] == data_element[1][index]  == data_element[2][index] == data_element[3][index]):
                 data['classes'] = data['classes']+" not_select"
-            show_element.append(data)
+            show_element.append(data.copy())
             index += 1
         element = show_element
         trigger_filter_change=0
@@ -313,6 +409,7 @@ def update_metrics(n,element):
                 flat_list.extend(element)
             service_graph_list = flat_list
             # create relation edge
+            # relation = []
             relation = (create_relation_service_device(home=home_tree, company=companyTree))
         trigger_web_hook=0
         data = datanew
@@ -562,5 +659,5 @@ def webhook():
 
 
 if __name__ == "__main__":
-    # app.run(port=5000,)  # type: ignore
-    app.run(debug=True)
+    app.run(port=5000,)  # type: ignore
+    # app.run(debug=True)

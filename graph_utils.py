@@ -158,9 +158,7 @@ def create_relation_service_device(home: HomeTree | None = None, company: Compan
                     if 'cate_service' in services[service_id]:
                         for service_device_id in services[service_id]['cate_service']:
                             for data_cat in services[service_id]['cate_service'][service_device_id]:
-                                # print(data_cat == device_unprocessed,device_unprocessed,data_cat)
                                 if data_cat == device_unprocessed and device_id == service_device_id:
-                                    # print(data_cat,device_unprocessed)
                                     service_node = company.find_node(id="c_0_s_" + service_id)
                                     service_leaf = company.find_leaf(node=service_node)
                                     device_node = home.find_node(id="h_0_d_" + device_id)
@@ -175,21 +173,20 @@ def create_relation_service_device(home: HomeTree | None = None, company: Compan
                                             if trust_key in service_category_mapping.keys()
                                             else "Low trust"
                                         )
-                                        # if data_cat == device_unprocessed == "Device Information" and device_id == service_device_id:
-                                        #         print(services[service_id]['cate_service'][service_device_id][data_cat]["action"].replace(' ','_')  +"------------------"+("st_" +trust_level).replace(' ','_') +",,,,,,,,,"+ se_leaf.id)
-                                        if services[service_id]["service_type"].replace(" ","_") in se_leaf.id and services[service_id]['cate_service'][service_device_id][data_cat]["action"].replace(' ','_') in se_leaf.id and ("st_" +trust_level).replace(' ','_') in se_leaf.id:
+                                        if services[service_id]["service_type"].replace(" ","_") in se_leaf.id and services[service_id]['cate_service'][service_device_id][data_cat]["action"].replace(' ','_') in se_leaf.id and ("#st_" +trust_level).replace(' ','_') in se_leaf.id:
                                             for de_leaf in device_leaf:
-                                                sen_key = (
-                                                    devices[device_id]["raw_data"][device_unprocessed]["action"],
-                                                    devices[device_id]["raw_data"][device_unprocessed]["frequency"],
-                                                    devices[device_id]["raw_data"][device_unprocessed]["sensitivity"],
-                                                )
-                                                sensitivity = (
-                                                    device_category_mapping[sen_key]
-                                                    if sen_key in device_category_mapping.keys()
-                                                    else "Private"
-                                                )
-                                                if device_unprocessed.replace(' ','_') in de_leaf.id and devices[device_id]['raw_data'][device_unprocessed]['action'].replace(' ','_') in de_leaf.id and ("sen_" +sensitivity).replace(' ','_') in de_leaf.id:
-                                                    service_device_relation.append(company.create_relation_visual(source=se_leaf.id, target=de_leaf.id, cls=VisualNodeType.RELATION_BETWEEN))
+                                                for data_list in devices[device_id]["raw_data"][device_unprocessed]:
+                                                    sen_key = (
+                                                        data_list["action"],
+                                                        data_list["frequency"],
+                                                        data_list["sensitivity"],
+                                                    )
+                                                    sensitivity = (
+                                                        device_category_mapping[sen_key]
+                                                        if sen_key in device_category_mapping.keys()
+                                                        else "Private"
+                                                    )
+                                                    if device_unprocessed.replace(' ','_') in de_leaf.id and data_list['action'].replace(' ','_') in de_leaf.id and ("sen_" +sensitivity).replace(' ','_') in de_leaf.id:
+                                                        service_device_relation.append(company.create_relation_visual(source=se_leaf.id, target=de_leaf.id, cls=VisualNodeType.RELATION_BETWEEN, route=de_leaf.route+"&&"+se_leaf.route))
     
     return service_device_relation

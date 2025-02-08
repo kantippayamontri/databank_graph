@@ -15,7 +15,7 @@ class Device(BaseModel):
     name: str = Field(alias="device_name")
     type: str = Field(alias="device_type")
     unprocessed_data: list[str] = Field(alias="device_unprocessed")
-    raw_data: dict[str, dict[str, str]] | None = Field(alias="raw_data")
+    raw_data: dict[str, list[dict[str, str]]] | None = Field(alias="raw_data")
 
 
 class DeviceEnum(Enum):
@@ -164,6 +164,7 @@ class Node:
         label: str,
         node_type: DeviceEnum | HomeEnum,
         visual_type: VisualNodeType,
+        route: str = "",
     ):
         self.id: str = id
         self.label: str = label
@@ -171,6 +172,7 @@ class Node:
         self.parent: list[Node] = []
         self.node_type: DeviceEnum | HomeEnum | CompanyEnum | ServiceEnum = node_type
         self.visual_type: VisualNodeType = visual_type
+        self.route: str = route
 
 
 class GraphTree:
@@ -179,7 +181,10 @@ class GraphTree:
 
     def get_root(self):
         return self.root
-
+    
+    def get_route(self):
+        return self.root.route
+    
     def add_child(self, parent_node: Node | None, child_node: Node):
         if parent_node is not None:
             # check parent node is redundant?
@@ -194,7 +199,6 @@ class GraphTree:
                 if child_node.id not in self.get_child_id(node=_parent_node):
                     _parent_node.children.append(child_node)
                     # if 's_2_st_Low_trust_Authority_false_false_false'==_parent_node.id:
-                    #     print(len(_parent_node.children))
         return child_node
 
     def add_mul_child(self, parent_node: Node, child_node: list[Node]):
@@ -254,7 +258,6 @@ class GraphTree:
         elif len(node.children) > 0:
             for child in node.children:
                 self.find_all_node(node=child)
-                # print(child.id)
         else: 
             return 1
     def find_leaf(self, node: Node | None = None):
@@ -308,6 +311,7 @@ class GraphTree:
                     ),
                     y=top_y + int(height_slot / 2),
                     cls=start_node.visual_type,
+                    route= start_node.route
                 )
             )  # append own node
             number_child = len(start_node.children)
@@ -335,6 +339,7 @@ class GraphTree:
                             source=start_node.id,
                             target=child.id,
                             cls=VisualNodeType.RELATION,
+                            route= start_node.route
                         )
                         data_visual_list.append(relation_dict)
 
@@ -345,16 +350,17 @@ class GraphTree:
                 return data_visual_list
 
     def create_node_visual(
-        self, id: str, label: str, x: int, y: int, cls: VisualNodeType
+        self, id: str, label: str, x: int, y: int, cls: VisualNodeType, route: str
     ):
 
         return {
             "data": {"id": id, "label": label},
             "position": {"x": x, "y": y},
             "classes": cls.value,
+            "route": route
         }
 
-    def create_relation_visual(self, source: str, target: str, cls: VisualNodeType):
+    def create_relation_visual(self, source: str, target: str, cls: VisualNodeType, route: str):
         return {
             "data": {
                 "id": "relation_source_" + source + "_target_" + target,
@@ -362,6 +368,7 @@ class GraphTree:
                 "target": target,
             },
             "classes": cls.value,
+            "route": route
         }
 
     def print_tree(self, show_id=False, show_level=False):
@@ -382,7 +389,6 @@ class GraphTree:
         if show_id:
             show_string = show_string + f" ({str(node.id)})"
 
-        # print(show_string)
 
         for child in node.children:
             self._print_tree_recursive(
@@ -511,6 +517,7 @@ class HomeTree(GraphTree):
                         x=(each_slot_width),
                         y=(index*height),
                         cls=_child.visual_type,
+                        route=_child.route,
                     )
                 )
             for index, _child in enumerate(node2): 
@@ -524,6 +531,7 @@ class HomeTree(GraphTree):
                         x=(2*each_slot_width),
                         y=(index*height),
                         cls=_child.visual_type,
+                        route=_child.route,
                     )
                 )
             for index, _child in enumerate(relation2):
@@ -534,6 +542,7 @@ class HomeTree(GraphTree):
                             source=id,
                             target=_child.id,
                             cls=VisualNodeType.RELATION,
+                            route=_child.route,
                         )
                         data_visual_list.append(relation_dict)
             for index, _child in enumerate(node3): 
@@ -548,6 +557,7 @@ class HomeTree(GraphTree):
                             x=(5*each_slot_width),
                             y=(index*height),
                             cls=_child.visual_type,
+                            route=_child.route,
                         )
                     )
                 else:
@@ -558,6 +568,7 @@ class HomeTree(GraphTree):
                             x=(3*each_slot_width),
                             y=(index*height),
                             cls=_child.visual_type,
+                            route=_child.route,
                         )
                     )
                 if _child.node_type != DeviceEnum.ACTION_UNPROCESSED:
@@ -567,6 +578,7 @@ class HomeTree(GraphTree):
                             source=id,
                             target=_child.id,
                             cls=VisualNodeType.RELATION,
+                            route=_child.route,
                         )
                         data_visual_list.append(relation_dict)
             for index, _child in enumerate(node4): 
@@ -580,6 +592,7 @@ class HomeTree(GraphTree):
                         x=(4*each_slot_width),
                         y=(index*height),
                         cls=_child.visual_type,
+                        route=_child.route,
                     )
                 )
             for index, _child in enumerate(relation4):
@@ -590,6 +603,7 @@ class HomeTree(GraphTree):
                             source=id,
                             target=_child.id,
                             cls=VisualNodeType.RELATION,
+                            route=_child.route,
                         )
                         data_visual_list.append(relation_dict)
             for index, _child in enumerate(self.get_root().children):
@@ -601,6 +615,7 @@ class HomeTree(GraphTree):
                         x=(0),
                         y=((height/3)+index*height),
                         cls=_child.visual_type,
+                        route=_child.route,
                     )
                 )
             for index, _child in enumerate(node1):
@@ -611,6 +626,7 @@ class HomeTree(GraphTree):
                             source=id,
                             target=_child.id,
                             cls=VisualNodeType.RELATION,
+                            route=_child.route,
                         )
                         data_visual_list.append(relation_dict)
         # remove home node if show_home_node = False
@@ -628,10 +644,11 @@ class HomeTree(GraphTree):
         # Create Tree and add device node
         tree = GraphTree(
             root=Node(
-                id=str("d_" + device.id).replace(" ", "_"),
+                id=str("#device_" + device.id).replace(" ", "_"),
                 label=device.name,
                 node_type=DeviceEnum.NAME,
                 visual_type=VisualNodeType.DEVICE_NORMAL,
+                route=str("#device_" + device.id).replace(" ", "_"),
             )
         )
         root = tree.get_root()
@@ -641,19 +658,20 @@ class HomeTree(GraphTree):
         # # Create Device unprocessed Node
         if device.unprocessed_data is not None:
             for _un in device.unprocessed_data:
-                id = "un_" + _un
+                id = "#un_" + _un
                 # check = [node for node in device_datas if id.replace(' ','_').lower() in node.id.lower()]
                 # if len(check)==0:
                 un_processed_node = Node(
-                    id="un_" + _un,
+                    id="#un_" + _un,
                     label=_un,
                     node_type=DeviceEnum.UNPROCESSED_DATA,
                     visual_type=VisualNodeType.DEVICE_TYPE,
+                    route=str("#device_" + device.id).replace(" ", "_")+"_un_" + _un.replace(" ", "_"),
                 )
                 device_datas.append(un_processed_node)
                 # else:
                 #     un_processed_node = check[0]
-                current_node = tree.add_child(
+                un_processed_node = tree.add_child(
                     parent_node=root, child_node=un_processed_node
                 )
 
@@ -662,64 +680,69 @@ class HomeTree(GraphTree):
         #             continue
                 if device.raw_data is not None:
                     if _un in device.raw_data.keys():  # found raw data
+                        index = 0
+                        for data_show in device.raw_data[_un]:
+                            # Create category -> sensitivity node
+                            sen_key = (
+                                data_show["action"],
+                                data_show["frequency"],
+                                data_show["sensitivity"],
+                            )
 
-                        # Create category -> sensitivity node
-                        sen_key = (
-                            device.raw_data[_un]["action"],
-                            device.raw_data[_un]["frequency"],
-                            device.raw_data[_un]["sensitivity"],
-                        )
+                            sensitivity = (
+                                device_category_mapping[sen_key]
+                                if sen_key in device_category_mapping.keys()
+                                else "Private"
+                            )
+                            sensitivity_node = Node(
+                                id="sen_" + sensitivity+"_"+str(index),
+                                label=sensitivity,
+                                node_type=DeviceEnum.SENSITIVITY,
+                                visual_type=VisualNodeType.DEVICE_ACTION_1,
+                                route=str("#device_" + device.id).replace(" ", "_")+"_un_" + _un.replace(" ", "_")+"#sen_" + sensitivity.replace(" ", "_")+"_"+str(index),
+                            )
+                            current_node = tree.add_child(
+                                parent_node=un_processed_node, child_node=sensitivity_node
+                            )
 
-                        sensitivity = (
-                            device_category_mapping[sen_key]
-                            if sen_key in device_category_mapping.keys()
-                            else "Private"
-                        )
-                        sensitivity_node = Node(
-                            id="sen_" + sensitivity,
-                            label=sensitivity,
-                            node_type=DeviceEnum.SENSITIVITY,
-                            visual_type=VisualNodeType.DEVICE_ACTION_1,
-                        )
-                        current_node = tree.add_child(
-                            parent_node=current_node, child_node=sensitivity_node
-                        )
+                            # Create action node
+                            action = data_show["action"]
+                            action_node = Node(
+                                id="at_" + action+"_"+str(index),
+                                label=action,
+                                node_type=DeviceEnum.ACTION,
+                                visual_type=VisualNodeType.DEVICE_ACTION_2,
+                                route=str("#device_" + device.id).replace(" ", "_")+"_un_" + _un.replace(" ", "_")+"#at_" + action.replace(" ", "_")+"_"+str(index),
+                            )
 
-                        # Create action node
-                        action = device.raw_data[_un]["action"]
-                        action_node = Node(
-                            id="at_" + action,
-                            label=action,
-                            node_type=DeviceEnum.ACTION,
-                            visual_type=VisualNodeType.DEVICE_ACTION_2,
-                        )
+                            # Create action unprocessed node #TODO: orange node
+                            action_unprocessed = action + "_" + _un
+                            action_unprocessed_node = Node(
+                                id="#atun_" + action_unprocessed+"_"+str(index),
+                                label=action_unprocessed.replace("_", "_"),
+                                node_type=DeviceEnum.ACTION_UNPROCESSED,
+                                visual_type=VisualNodeType.DEVICE_SPECIAL,
+                                route=str("#device_" + device.id).replace(" ", "_")+"_un_" + _un.replace(" ", "_")+"#atun_" + action_unprocessed.replace(" ", "_")+"_"+str(index),
+                            )
 
-                        # Create action unprocessed node #TODO: orange node
-                        action_unprocessed = action + "_" + _un
-                        action_unprocessed_node = Node(
-                            id="atun_" + action_unprocessed,
-                            label=action_unprocessed.replace("_", "_"),
-                            node_type=DeviceEnum.ACTION_UNPROCESSED,
-                            visual_type=VisualNodeType.DEVICE_SPECIAL,
-                        )
+                            current_node: list[Node] = tree.add_mul_child(
+                                parent_node=current_node,
+                                child_node=[action_node, action_unprocessed_node],
+                            )  # return multiple child node
 
-                        current_node: list[Node] = tree.add_mul_child(
-                            parent_node=current_node,
-                            child_node=[action_node, action_unprocessed_node],
-                        )  # return multiple child node
-
-                        # Create sensitivity action
-                        sensitivity_action = sensitivity + "_" + action
-                        sensitivity_action_node = Node(
-                            id="senat_" + sensitivity_action,
-                            label=sensitivity_action,
-                            node_type=DeviceEnum.SENSITIVITY_ACTION,
-                            visual_type=VisualNodeType.DEVICE_SPECIAL_2,
-                        )
-
-                        current_node = tree.add_child_mul_parent(
-                            parent_node=current_node, child_node=sensitivity_action_node
-                        )
+                            # Create sensitivity action
+                            sensitivity_action = sensitivity + "_" + action
+                            sensitivity_action_node = Node(
+                                id="#senat_" + sensitivity_action+"_"+str(index),
+                                label=sensitivity_action,
+                                node_type=DeviceEnum.SENSITIVITY_ACTION,
+                                visual_type=VisualNodeType.DEVICE_SPECIAL_2,
+                                route=str("#device_" + device.id).replace(" ", "_")+"_un_" + _un.replace(" ", "_")+"#sen_" + sensitivity.replace(" ", "_")+"_"+str(index)+"#at_" + action.replace(" ", "_")+"_"+str(index)+"#atun_" + action_unprocessed.replace(" ", "_")+"_"+str(index),
+                            )
+                            current_node = tree.add_child_mul_parent(
+                                parent_node=current_node, child_node=sensitivity_action_node
+                            )
+                            index += 1
 
         return tree
 
@@ -756,13 +779,13 @@ class CompanyTree(GraphTree):
             return None
 
         # Create Tree and Service node
-        # print(service.name)
         tree = GraphTree(
             root=Node(
-                id="s_" + service.id,
+                id="#service_" + service.id,
                 label=service.name,
                 node_type=ServiceEnum.NAME,
                 visual_type=VisualNodeType.SERVICE_NORMAL,
+                route="#service_" + service.id,
             )
         )
 
@@ -808,10 +831,10 @@ class CompanyTree(GraphTree):
                     # )
 
                     # create service_type node
-                    # id = "st_" + service.type
+                    # id = "#st_" + service.type
                     # check = [node for node in service_type_name_exist if id.replace(' ','_').lower() in node.id.lower()]
                     # if len(check)==0:
-                    service_type_node_id="st_" +trust_level.replace(" ","_") + "_" +service.type.replace(" ","_")+"_"+_holiday+"_"+_night+"_"+_home
+                    service_type_node_id="#st_" +trust_level.replace(" ","_") + "_#type_" +service.type.replace(" ","_")+"_"+_holiday+"_"+_night+"_"+_home
                     node = [item for item in list_service_type_node if service_type_node_id in item.id]
                     if len(node)==0:
                         service_type_node = Node(
@@ -819,6 +842,7 @@ class CompanyTree(GraphTree):
                             label=trust_level+" "+service.type,
                             node_type=ServiceEnum.TYPE,
                             visual_type=VisualNodeType.SERVICE_TYPE,
+                            route="#service_" + service.id+"_#type_"+service.type.replace(" ","_")+service_type_node_id
                         )
                         current_node_type = tree.add_child(
                             parent_node=tree.get_root(),
@@ -828,10 +852,11 @@ class CompanyTree(GraphTree):
                     else:
                         current_node_type=node[0]
                     service_action_node = Node(
-                        id="sa_" + _action,
+                        id="#sa_" + _action,
                         label=_action,
                         node_type=ServiceEnum.ACTION,
                         visual_type=VisualNodeType.SERVICE_ACTION,
+                        route="#service_" + service.id+"_#type_"+service.type.replace(" ","_")+service_type_node_id+"_sa_" + _action.replace(" ","_"),
                     )
                     current_node = tree.add_child(
                         parent_node=current_node_type, child_node=service_action_node
@@ -843,10 +868,11 @@ class CompanyTree(GraphTree):
 
             # create service_type node
             _service_type = Node(
-                id="st_" + service.type,
+                id="#st_" + service.type,
                 label=service.type,
                 node_type=ServiceEnum.TYPE,
                 visual_type=VisualNodeType.SERVICE_TYPE,
+                route="#service_" + service.id+"#st_" + service.type,
             )
             current_node = tree.add_child(
                 parent_node=tree.get_root(), child_node=_service_type
@@ -927,6 +953,7 @@ class CompanyTree(GraphTree):
                         x=(screen_width-(2.5*each_slot_width)+(screen_width*15/10)),
                         y=(index*height),
                         cls=_child.visual_type,
+                        route=_child.route,
                     )
                 )
             for index, _child in enumerate(node1):
@@ -940,6 +967,7 @@ class CompanyTree(GraphTree):
                         x=(screen_width-(1.25*each_slot_width)+(screen_width*15/10)),
                         y=(index*height),
                         cls=_child.visual_type,
+                        route=_child.route,
                     )
                 )
             
@@ -951,6 +979,7 @@ class CompanyTree(GraphTree):
                             source=id,
                             target=_child.id,
                             cls=VisualNodeType.RELATION_SERVICE,
+                            route=_child.route,
                         )
                         data_visual_list.append(relation_dict)
             for index, _child in enumerate(self.get_root().children):
@@ -962,6 +991,7 @@ class CompanyTree(GraphTree):
                         x=(screen_width+(screen_width*15/10)),
                         y=((height/4)+index*height),
                         cls=_child.visual_type,
+                        route=_child.route,
                     )
                 )
             for index, _child in enumerate(node1):
@@ -972,6 +1002,7 @@ class CompanyTree(GraphTree):
                             source=id,
                             target=_child.id,
                             cls=VisualNodeType.RELATION_SERVICE,
+                            route=_child.route,
                         )
                         data_visual_list.append(relation_dict)
                 # data_visual_list.extend(
