@@ -13,8 +13,11 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
 
+from database import select_device,select_device_data,select_action,select_action_with_clond_category,select_service,select_service_category,select_service_action,select_service_category_by_service,select_cloud_category
+
 data= {'data':{'devices':{},'services':{}},'screenWidth':1920}
 trigger_web_hook = 0
+check_finish_load = 0
 trigger_filter_change = 0
 reset_filter_change = 0
 filter_type = [None,None,None,None]
@@ -27,487 +30,976 @@ service_name = []
 service_type = []
 new_value = [None,None,None,None]
 old_element = []
+element=[]
 server = Flask(__name__)
 app = Dash(__name__, server=server)
 CORS(server)
+default_stylesheet = [{'selector': 'edge', 'style': {'curve-style': 'bezier'}}, {'selector': '.home', 'style': {'backgroundColor': '#3498db', 'content': 'data(label)'}}, {'selector': '.device_normal', 'style': {'backgroundColor': '#148f77', 'content': 'data(label)'}}, {'selector': '.device_special', 'style': {'backgroundColor': '#f39c12', 'content': 'data(label)'}}, {'selector': '.company', 'style': {'backgroundColor': '#592720', 'content': 'data(label)'}}, {'selector': '.service_normal', 'style': {'backgroundColor': '#e53145', 'content': 'data(label)'}}, {'selector': '[id *= "relation_"]', 'style': {'line-color': 'black', 'target-arrow-color': 'black', 'target-arrow-shape': 'triangle'}}]
+# center node
+def center_nodes(num_nodes, node_height, container_height):
+    # Step 1: Calculate total height of all nodes
+    total_nodes_height = num_nodes * node_height
+    
+    # Step 2: Calculate starting Y position to center nodes
+    start_y = (container_height - total_nodes_height) / 2
+    
+    # Step 3: Calculate Y positions for each node
+    y_positions = [start_y + i * node_height for i in range(num_nodes)]
+    
+    return y_positions
+# first load
+data = select_device()
+element=list([])
+height=800/len(data)
+node_center = center_nodes(4,2*height,800)
+# category
+element.append({
+    "data": {"id": 'category_top_secret', "label": 'Top Secret'},
+    "position": {"x": 400, "y": node_center[3]},
+    "type":"category",
+    "classes":"device_category"
+})
+element.append({
+    "data": {"id": 'category_secret', "label": 'Secret'},
+    "position": {"x": 450, "y": node_center[2]},
+    "type":"category",
+    "classes":"device_category"
+})
+element.append({
+    "data":{
+        "id":"relation_category_secret_to_category_top_secret",
+        "source":'category_secret',
+        "target":'category_top_secret'
+    },
+    "type":"category_relation",
+    "classes":"device_relation"
+})
+element.append({
+    "data": {"id": 'category_private', "label": 'Private'},
+    "position": {"x": 500, "y": node_center[1]},
+    "type":"category",
+    "classes":"device_category"
+})
+element.append({
+    "data":{
+        "id":"relation_category_private_to_category_secret",
+        "source":'category_private',
+        "target":'category_secret'
+    },
+    "type":"category_relation",
+    "classes":"device_relation"
+})
+element.append({
+    "data": {"id": 'category_public', "label": 'Public'},
+    "position": {"x": 550, "y": node_center[0]},
+    "type":"category",
+    "classes":"device_category"
+})
+element.append({
+    "data":{
+        "id":"relation_category_public_to_category_private",
+        "source":'category_public',
+        "target":'category_private'
+    },
+    "type":"category_relation",
+    "classes":"device_relation"
+})
+device_data=select_device_data('all')
+for index,device in enumerate(data):
+    # device
+    element.append({
+        "data": {"id": str(device[0]), "label": device[1]},
+        "position": {"x": 0, "y": index*height},
+        "type":"device",
+        "classes":'device_normal'
+    })
+    item= [item for i, item in enumerate(device_data) if str(item[1]) == str(device[0])][0]
+    # device data
+    element.append({
+        "data": {"id": 'data_'+str(item[0]), "label": item[3]},
+        "position": {"x": 150, "y": index*height},
+        "type":"device_data",
+        "classes":'device_data'
+    })
+    # device relationship
+    element.append({
+        "data":{
+            "id":"relation_device_"+str(device[0])+"_data_"+str(item[0]),
+            "source":str(device[0]),
+            "target":'data_'+str(item[0])
+        },
+        "type":"device_relation",
+        "classes":"no-arrow"
+    })
+    # category relationship
+    element.append({
+        "data":{
+            "id":"relation_data_"+str(item[0])+"_to_category_"+str(item[4]),
+            "source":'data_'+str(item[0]),
+            "target":'category_'+str(item[4]).replace(' ','_')
+        },
+        "type":"device_relation",
+        "classes":"no-arrow"
+    })
+# cloud category
+node_center = center_nodes(4,2*height,800)
+cloud_category = select_cloud_category()
+old_id = ""
+for index,cloud in enumerate(cloud_category):
+    element.append({
+        "data": {"id": 'cloud_category_'+cloud[1].lower().replace(' ','_'), "label": cloud[1]},
+        "position": {"x": 850, "y": node_center[index]},
+        "type":"cloud_category",
+        "classes":"cloud_category"
+    })
+    element.append({
+        "data": {"id": 'stored_'+cloud[1].lower().replace(' ','_'), "label": 'Store '+cloud[1].split(' ')[0]},
+        "position": {"x": 750, "y": node_center[index]-30},
+        "type":"cloud_category",
+        "classes":"cloud_store"
+    })
+    element.append({
+        "data":{
+            "id":"relation_stored_"+cloud[1].lower().replace(' ','_')+"_to_cloud_category_"+cloud[1].lower().replace(' ','_'),
+            "source":'stored_'+cloud[1].lower().replace(' ','_'),
+            "target":'cloud_category_'+cloud[1].lower().replace(' ','_')
+        },
+        "type":"cloud_category_relation",
+        "classes":"no-arrow"
+    })
+    if old_id !="":
+        element.append({
+            "data":{
+                "id":"relation_"+old_id+"_to_cloud_category_"+cloud[1].lower().replace(' ','_'),
+                "source":old_id,
+                "target":'cloud_category_'+cloud[1].lower().replace(' ','_')
+            },
+            "type":"cloud_category_relation",
+            "classes":"device_relation"
+        })
+    old_id='cloud_category_'+cloud[1].lower().replace(' ','_')
+#action
+actions = select_action()
+node_center = center_nodes(len(actions)+1,2*height,800)
+for index,action in enumerate(actions):
+    element.append({
+        "data": {"id": 'action_'+str(action[0]), "label": action[1]},
+        "position": {"x": 650, "y": node_center[index]},
+        "type":"device_data",
+        "classes":'device_action'
+    })
+    # action relationship
+    element.append({
+        "data":{
+            "id":"relation_category_"+str(data[2]).replace(' ','_')+"_to_action_"+str(action[0]),
+            "source":'category_'+str(action[2]).replace(' ','_'),
+            "target":'action_'+str(action[0])
+        },
+        "type":"device_relation",
+        "classes":"no-arrow"
+    })
+    #cloud category with action
+    cloud_with_action =select_action_with_clond_category(action[0])[0]
+    # action relationship with cloud category
+    element.append({
+        "data":{
+            "id":"relation_action"+str(action[0])+"_to_cloud_category_"+cloud_with_action[3].lower().replace(' ','_'),
+            "source":'action_'+str(action[0]),
+            "target":"cloud_category_"+cloud_with_action[3].lower().replace(' ','_')
+        },
+        "type":"device_relation",
+        "classes":"no-arrow"
+    })
 
-default_stylesheet = [{'selector': 'edge', 'style': {'curve-style': 'bezier'}}, {'selector': '.home', 'style': {'background-color': '#3498db', 'content': 'data(label)'}}, {'selector': '.device_normal', 'style': {'background-color': '#148f77', 'content': 'data(label)'}}, {'selector': '.device_special', 'style': {'background-color': '#f39c12', 'content': 'data(label)'}}, {'selector': '.company', 'style': {'background-color': '#592720', 'content': 'data(label)'}}, {'selector': '.service_normal', 'style': {'background-color': '#e53145', 'content': 'data(label)'}}, {'selector': '[id *= "relation_"]', 'style': {'line-color': 'black', 'target-arrow-color': 'black', 'target-arrow-shape': 'triangle'}}]
+#service category
+service_categories = select_service_category()
+node_center = center_nodes(len(service_categories)+1,2*height,800)
+old_id=""
+for index,category in enumerate(service_categories):
+    element.append({
+        "data": {"id": 'service_category_'+str(category[0]), "label": category[1]},
+        "position": {"x": 1150+(50*index), "y": node_center[index]},
+        "type":"service_category",
+        "classes":'service_category'
+    })
+    if old_id !="":
+        element.append({
+            "data":{
+                "id":"relation_"+old_id+"_to_service_category_"+str(category[0]),
+                "source":"service_category_"+str(category[0]),
+                "target":old_id
+            },
+            "type":"cloud_category_relation",
+            "classes":"device_relation"
+        })
+    old_id='service_category_'+str(category[0])
+#service action
+service_actions = select_service_action()
+node_center = center_nodes(len(service_actions)+1,2*height,800)
+for index,action in enumerate(service_actions):
+    element.append({
+        "data": {"id": 'service_action_'+str(action[0]), "label": action[3]},
+        "position": {"x": 1000, "y": node_center[index]},
+        "type":"service_category",
+        "classes":'service_action'
+    })
+    element.append({
+        "data":{
+            "id":"relation_service_action_"+str(action[0])+"_to_cloud_category_"+str(action[4]).lower().replace(' ','_'),
+            "source":"service_action_"+str(action[0]),
+            "target":"cloud_category_"+str(action[4]).lower().replace(' ','_')
+        },
+        "type":"service_relation",
+        "classes":"no-arrow"
+    })
+    element.append({
+        "data":{
+            "id":"relation_service_category_"+str(action[0])+"_to_service_action_"+str(action[0]),
+            "source":'service_category_'+str(action[1]),
+            "target":"service_action_"+str(action[0])
+        },
+        "type":"service_relation",
+        "classes":"no-arrow"
+    })
+#service
+services = select_service()
+height=800/len(services)
+for index,service in enumerate(services):
+    element.append({
+        "data": {"id": 'service_'+str(service[0]), "label": service[1]},
+        "position": {"x": 1600, "y": index*height},
+        "type":"service",
+        "classes":'service_normal'
+    })
+    #service category relationship
+    category = select_service_category_by_service(service[0])
+    for index,cat in enumerate(category):
+        element.append({
+            "data":{
+                "id":"relation_service_"+str(service[0])+"_to_service_category_"+str(cat[0]),
+                "source":'service_'+str(service[0]),
+                "target":"service_category_"+str(cat[0])
+            },
+            "type":"service_relation",
+            "classes":"no-arrow"
+        })
+
+
 # update function when new data
+# @callback(
+#         Output('databank-graph', 'elements'),
+#         Output('device', 'options'),
+#         Output('device_data', 'options'),
+#         Output('service_name', 'options'),
+#         Output('service_type', 'options'),
+#         Input('interval-component', 'n_intervals'),
+#         Input('databank-graph', 'elements'),
+#         prevent_initial_call=True,)
+# def update_metrics(n,element):
+#     print('show')
+#     # global data,trigger_web_hook,device_graph_list,service_graph_list,relation,device_name,device_data,service_name,service_type,trigger_filter_change,new_value,filter_type,reset_filter_change
+#     # #filter graph
+#     # if trigger_filter_change==1:
+#     #     # make element to default
+#     #     no_filter_data= []
+#     #     for data in element:
+#     #         data['classes'] = data['classes'].replace(' not_select', '')
+#     #         no_filter_data.append(data.copy())
+#     #     data_element = []
+#     #     use_element = no_filter_data.copy()
+#     #     if filter_type[0] != None:
+#     #         data=[]
+#     #         company_pair = []
+#     #         new_element = use_element.copy()[::-1]
+#     #         service_data = list()
+#     #         service_array = list()
+#     #         service_sa_array = list()
+#     #         for results in new_element:
+#     #             result = results.copy()
+#     #             if ' not_select' in result['classes']:
+#     #                 result['classes'] = result['classes'].replace(' not_select', '')
+#     #             if result['classes'] == 'device_relation':
+#     #                 if not ('#device_'+new_value[0] in str(result['route']) and '#device_'+new_value[0] in str(result['route'])) :
+#     #                     result['classes'] = result['classes']+" not_select"
+#     #             elif result['classes'] == 'between_relation':
+#     #                 if '#device_'+new_value[0] not in str(result['route']):
+#     #                     result['classes'] = result['classes']+" not_select"
+#     #                 else:
+#     #                     ser_data = result['route'].split("&&")[1]
+#     #                     service_data.append(ser_data)
+#     #                     data_show = ser_data.split('_sa_')
+#     #                     service_array.append(data_show[0])
+#     #                     service_sa_array.append(ser_data)
+#     #                     service_array = list(set(service_array))
+#     #                     service_sa_array = list(set(service_sa_array))
+#     #             elif result['classes'] == 'device_normal' or result['classes'] == 'between_relation' or result['classes'] == 'device_special' or result['classes'] == 'device_type' or result['classes'] == 'device_action_1' or result['classes'] == 'device_action_2' or result['classes'] == 'device_special_2':
+#     #                 if '#device_'+new_value[0] not in str(result['route']) and len([item for item in company_pair if item in str(result['route'])])==0:
+#     #                     result['classes'] = result['classes']+" not_select"
+#     #             elif result['route'] in service_data:
+#     #                 print('-')
+#     #             elif result['classes'] == 'service_relation' or result['classes'] == 'service_normal' or result['classes'] == 'service_trust'  or result['classes'] == 'service_type'  or result['classes'] == 'service_action':
+#     #                 if '_sa_' in result['route']:
+#     #                     if result['route'] not in service_sa_array:
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #                 elif '_#type_' not in result['route']:
+#     #                     data_show = result['route'].split('_#type_')[0]
+#     #                     if len([data for data in service_array if data_show in data])==0:
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #                 else:
+#     #                     if result['route'] not in service_array:
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #             data.append(result.copy())
+#     #         new_data = data[::-1]
+#     #         data_element.append(new_data.copy())
+
+#     #     else:
+#     #         data_element.append(use_element.copy())
+#     #     if filter_type[1] != None:
+#     #         data=[]
+#     #         company_pair = []
+#     #         new_element = use_element.copy()[::-1]
+#     #         service_data = list()
+#     #         service_array = list()
+#     #         service_sa_array = list()
+#     #         device_id = list()
+#     #         for results in new_element:
+#     #             result = results.copy()
+#     #             if ' not_select' in result['classes']:
+#     #                 result['classes'] = result['classes'].replace(' not_select', '')
+#     #             if result['classes'] == 'device_relation':
+#     #                 if not (new_value[1] in str(result['route']) and new_value[1] in str(result['route'])) :
+#     #                     result['classes'] = result['classes']+" not_select"
+#     #                 else:
+#     #                     data_show = result['route'].split('#device_')[1]
+#     #                     data_show = data_show.split('_un_')[0]
+#     #                     device_id.append(data_show)
+#     #                     device_id = list(set(device_id))
+#     #             elif result['classes'] == 'between_relation':
+#     #                 if new_value[1] not in str(result['route']):
+#     #                     result['classes'] = result['classes']+" not_select"
+#     #                 else:
+#     #                     ser_data = result['route'].split("&&")[1]
+#     #                     service_data.append(ser_data)
+#     #                     data_show = ser_data.split('_sa_')
+#     #                     service_array.append(data_show[0])
+#     #                     service_sa_array.append(ser_data)
+#     #                     service_array = list(set(service_array))
+#     #                     service_sa_array = list(set(service_sa_array))
+#     #             elif result['classes'] == 'device_normal' or result['classes'] == 'between_relation' or result['classes'] == 'device_special' or result['classes'] == 'device_type' or result['classes'] == 'device_action_1' or result['classes'] == 'device_action_2' or result['classes'] == 'device_special_2':
+#     #                 if new_value[1] not in str(result['route']) and len([item for item in company_pair if item in str(result['route'])])==0:
+#     #                     result['classes'] = result['classes']+" not_select"
+#     #             elif result['route'] in service_data:
+#     #                 print('-')
+#     #             elif result['classes'] == 'service_relation' or result['classes'] == 'service_normal' or result['classes'] == 'service_trust'  or result['classes'] == 'service_type'  or result['classes'] == 'service_action':
+#     #                 if '#st_' in result['route']:
+#     #                     data_show = result['route'].split('#st_')[1]
+#     #                     data_show = data_show.split('#_sa_')[0]
+#     #                     if len([data for data in service_sa_array if data_show in data])==0:
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #                 elif '_sa_' in result['route']:
+#     #                     if result['route'] not in service_sa_array:
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #                 elif '_#type_' not in result['route']:
+#     #                     data_show = result['route'].split('_#type_')[0]
+#     #                     if len([data for data in service_array if data_show in data])==0:
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #                 else:
+#     #                     if result['route'] not in service_array:
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #             data.append(result.copy())
+#     #         new_data = list()
+#     #         for results in data:
+#     #             result = results.copy()
+#     #             if result['classes'] == 'device_normal not_select':
+#     #                 if '_un_' not in result['route']:
+#     #                     if str(result['route'].split('#device_')[1]) in device_id:
+#     #                         result['classes'] = result['classes'].replace(' not_select', '')
+#     #             new_data.append(result.copy())
+#     #         new_data = new_data[::-1]
+#     #         data_element.append(new_data.copy())
+#     #     else:
+#     #         data_element.append(use_element.copy())
+#     #     if filter_type[2] != None:
+#     #         data=[]
+#     #         device_pair = []
+#     #         new_element = use_element.copy()[::-1]
+#     #         device_data = list()
+#     #         device_array = list()
+#     #         device_un_array = list()
+#     #         for results in new_element:
+#     #             result = results
+#     #             if ' not_select' in result['classes']:
+#     #                 result['classes'] = result['classes'].replace(' not_select', '')
+#     #             if result['classes'] == 'service_relation':
+#     #                 if not ("#service_"+new_value[2] in str(result['route'])) :
+#     #                     result['classes'] = result['classes']+" not_select"
+#     #             elif result['classes'] == 'between_relation':
+#     #                 if "#service_"+new_value[2] not in str(result['route']):
+#     #                     result['classes'] = result['classes']+" not_select"
+#     #                 else:
+#     #                     dev_data = result['route'].split("&&")[0]
+#     #                     device_data.append(dev_data)
+#     #                     data_show = dev_data.split('_un_')
+#     #                     device_array.append(data_show[0])
+#     #                     device_un_array.append(data_show[1])
+#     #                     device_array = list(set(device_array))
+#     #                     device_un_array = list(set(device_un_array))
+#     #                     device_data = list(set(device_data))
+#     #             elif result['classes'] == 'service_normal' or result['classes'] == 'service_trust' or result['classes'] == 'service_type' or result['classes'] == 'service_action':
+#     #                 if "#service_"+new_value[2] not in str(result['route']):
+#     #                     result['classes'] = result['classes']+" not_select"
+#     #             elif result['route'] in device_data:
+#     #                 print('-')
+#     #             elif '_un_' not in result['route']:
+#     #                     dev_device = result['route'].split('#device_')[1]
+#     #                     if len([item for item in device_array if '#device_'+dev_device in item])==0:
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #             else:
+#     #                 dev_un='&--'
+#     #                 dev_sen='&--'
+#     #                 dev_at='&--'
+#     #                 dev_atun='&--'
+#     #                 dev_device = result['route'].split('#device_')[1]
+#     #                 dev_device = dev_device.split('_un_')[0]
+#     #                 if "#atun_" in result['route']:
+#     #                     dev_atun = result['route'].split('#atun_')[1]
+#     #                 if "#at_" in result['route']:
+#     #                     dev_data = result['route'].split('#at_')[1]
+#     #                     dev_at = dev_data.split('#atun_')[0]
+#     #                 if "#sen_" in result['route']:
+#     #                     dev_data = result['route'].split('#sen_')[1]
+#     #                     dev_sen = dev_data.split('#at_')[0]
+#     #                 if "_un_" in result['route']:
+#     #                     dev_data = result['route'].split('_un_')[1]
+#     #                     dev_un = dev_data.split('#')[0]
+#     #                 if (dev_sen == '&--' and dev_at == '&--' and dev_atun == '&--'):
+#     #                     if len([item for item in device_un_array if dev_un in item])==0:
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #                     elif not(len([item for item in device_data if '#device_'+dev_device in item and dev_un in item])>0):
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #                 else :
+#     #                     if not((len([item for item in device_un_array if dev_un in item])>0) and (len([item for item in device_un_array if dev_sen in item])>0 or len([item for item in device_un_array if dev_at in item])>0 or len([item for item in device_un_array if dev_atun in item])>0)):
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #                     elif not(len([item for item in device_data if '#device_'+dev_device in item and dev_un in item])>0):
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #             data.append(result.copy())
+#     #         new_data = data[::-1]
+#     #         data_element.append(new_data.copy())
+#     #     else:
+#     #         data_element.append(use_element.copy())
+#     #     if filter_type[3] != None:
+#     #         data=[]
+#     #         new_element = use_element.copy()[::-1]
+#     #         device_data = list()
+#     #         device_array = list()
+#     #         device_un_array = list()
+#     #         service_id = list()
+#     #         route_array = list()
+#     #         for results in new_element:
+#     #             result = results.copy()
+#     #             if ' not_select' in result['classes']:
+#     #                 result['classes'] = result['classes'].replace(' not_select', '')
+#     #             if result['classes'] == 'service_relation':
+#     #                 if not (new_value[3] in str(result['route'])) :
+#     #                     result['classes'] = result['classes']+" not_select"
+#     #                 else:
+#     #                     data_show = result['route'].split('#service_')[1]
+#     #                     data_show = data_show.split('_#type_')[0]
+#     #                     service_id.append(data_show)
+#     #                     service_id = list(set(service_id))
+#     #                     route_array = list(set(route_array))
+#     #             elif result['classes'] == 'between_relation':
+#     #                 if new_value[3] not in str(result['route']):
+#     #                     result['classes'] = result['classes']+" not_select"
+#     #                 else:
+#     #                     dev_data = result['route'].split("&&")[0]
+#     #                     device_data.append(dev_data)
+#     #                     data_show = dev_data.split('_un_')
+#     #                     device_array.append(data_show[0])
+#     #                     device_un_array.append(data_show[1])
+#     #                     device_array = list(set(device_array))
+#     #                     device_un_array = list(set(device_un_array))
+#     #                     device_data = list(set(device_data))
+#     #             elif result['classes'] == 'service_normal' or result['classes'] == 'service_trust' or result['classes'] == 'service_type' or result['classes'] == 'service_action':
+#     #                 if new_value[3] not in str(result['route']):
+#     #                     result['classes'] = result['classes']+" not_select"
+#     #             elif result['route'] in device_data:
+#     #                 print('-')
+#     #             elif '_un_' not in result['route']:
+#     #                     dev_device = result['route'].split('#device_')[1]
+#     #                     if len([item for item in device_array if '#device_'+dev_device in item])==0:
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #             else:
+#     #                 dev_un='&--'
+#     #                 dev_sen='&--'
+#     #                 dev_at='&--'
+#     #                 dev_atun='&--'
+#     #                 dev_device = result['route'].split('#device_')[1]
+#     #                 dev_device = dev_device.split('_un_')[0]
+#     #                 if "#atun_" in result['route']:
+#     #                     dev_atun = result['route'].split('#atun_')[1]
+#     #                 if "#at_" in result['route']:
+#     #                     dev_data = result['route'].split('#at_')[1]
+#     #                     dev_at = dev_data.split('#atun_')[0]
+#     #                 if "#sen_" in result['route']:
+#     #                     dev_data = result['route'].split('#sen_')[1]
+#     #                     dev_sen = dev_data.split('#at_')[0]
+#     #                 if "_un_" in result['route']:
+#     #                     dev_data = result['route'].split('_un_')[1]
+#     #                     dev_un = dev_data.split('#')[0]
+#     #                 if (dev_sen == '&--' and dev_at == '&--' and dev_atun == '&--'):
+#     #                     if len([item for item in device_un_array if dev_un in item])==0:
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #                     elif not(len([item for item in device_data if '#device_'+dev_device in item and dev_un in item])>0):
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #                 else :
+#     #                     if not((len([item for item in device_un_array if dev_un in item])>0) and (len([item for item in device_un_array if dev_sen in item])>0 or len([item for item in device_un_array if dev_at in item])>0 or len([item for item in device_un_array if dev_atun in item])>0)):
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #                     elif not(len([item for item in device_data if '#device_'+dev_device in item and dev_un in item])>0):
+#     #                         result['classes'] = result['classes']+" not_select"
+#     #             data.append(result.copy())
+#     #         new_data = list()
+#     #         for results in data:
+#     #             result = results.copy()
+#     #             if result['classes'] == 'service_normal not_select':
+#     #                 if '_#type_' not in result['route']:
+#     #                     if str(result['route'].split('#service_')[1]) in service_id:
+#     #                         result['classes'] = result['classes'].replace(' not_select', '')
+#     #             new_data.append(result.copy())
+#     #         new_data = new_data[::-1]
+#     #         data_element.append(new_data.copy())
+#     #     else:
+#     #         data_element.append(use_element.copy())
+#     #     index = 0
+#     #     show_element = []
+#     #     for data in use_element:
+#     #         if not(data_element[0][index] == data_element[1][index]  == data_element[2][index] == data_element[3][index]):
+#     #             data['classes'] = data['classes']+" not_select"
+#     #         show_element.append(data.copy())
+#     #         index += 1
+#     #     element = show_element
+#     #     trigger_filter_change=0
+#     # if reset_filter_change == 1:
+#     #     data = []
+#     #     for result in element:
+#     #         if ' not_select' in result['classes']:
+#     #             result['classes'] = result['classes'].replace(' not_select', '')
+#     #         data.append(result.copy())
+#     #     element = data
+#     #     reset_filter_change = 0
+#     print(trigger_web_hook)
+#     print(12345)
+#     if(trigger_web_hook == 1):
+#         with open('./mock_data.json', 'r') as file:
+#             datanew = json.load(file)
+#         print(datanew)
+#         data = datanew["data"]
+#         screen_width = datanew["screenWidth"]
+#         screen_heigth = datanew["screenHeight"]
+#         #def devide screen size for device and service
+#         device_screen_width = int(5*screen_width / 8)
+#         service_screen_width = int(3*screen_width / 8)
+#         device_screen_height = service_screen_heigth = screen_heigth
+
+#         devices, services = create_elements(data) # get devices and services from data
+#         # get device name and device_data
+#         device_name = []
+#         device_data = []
+#         for key in datanew['data']['devices'].keys():
+#             name = datanew['data']['devices'][key]['device_name']
+#             device_name.append({'label': name, 'value': key})
+#             if datanew['data']['devices'][key]['device_unprocessed'] != None:
+#                 for data in datanew['data']['devices'][key]['device_unprocessed']:
+#                     device_data.append({'label': data, 'value': data})
+#         service_name = []
+#         service_type = []
+#         for key in datanew['data']['services'].keys():
+#             name = datanew['data']['services'][key]['service_name']
+#             com_type = datanew['data']['services'][key]['service_type']
+#             service_name.append({'label': name, 'value': key})
+#             service_type.append({'label': com_type, 'value': com_type})
+#         # make array unique
+#         unique_list = []
+#         [unique_list.append(item) for item in device_name if item not in unique_list]
+#         device_name = unique_list
+#         unique_list = []
+#         [unique_list.append(item) for item in device_data if item not in unique_list]
+#         device_data = unique_list
+#         unique_list = []
+#         [unique_list.append(item) for item in service_name if item not in unique_list]
+#         service_name = unique_list
+#         unique_list = []
+#         [unique_list.append(item) for item in service_type if item not in unique_list]
+#         service_type = unique_list
+#         home_tree = create_home_tree(devices=devices) # make tree for device
+#         if home_tree is not None:
+#             home_tree.print_tree(show_id=True, show_level=True)
+#         #gen grapg for visual for device
+#         device_graph_list = []
+#         if len(devices):
+#             device_graph_list = home_tree.gen_data_visual_home(
+#             top_x=0,
+#             top_y=0,
+#             screen_width=device_screen_width,
+#             screen_height=device_screen_height,
+#             show_home_node=False  #start from device node
+#             )
+
+#         # prepare node for service
+#         service_graph_list = []
+#         companyTree =[]
+#         if len(services):
+#             companyTree = create_company_tree(services=services)
+#             companyTree.print_tree(show_id=True, show_level=True)
+#             # get service node and edge element to generate graph
+#             service_graph_list = companyTree.gen_data_visual_company(
+#                 top_x=service_screen_width,
+#                 top_y=0,
+#                 screen_width=service_screen_width,
+#                 screen_height=service_screen_heigth,
+#                 show_company_node=False,
+#                 home=home_tree,
+#             ),
+#             flat_list = []
+#             for element in service_graph_list:
+#                 flat_list.extend(element)
+#             service_graph_list = flat_list
+#             # create relation edge
+#             # relation = []
+#             relation = (create_relation_service_device(home=home_tree, company=companyTree))
+#         trigger_web_hook=0
+#         data = datanew
+#         return (device_graph_list) + (service_graph_list) + relation,device_name,device_data,service_name,service_type
+#     return  element,device_name,device_data,service_name,service_type
+
 @callback(
         Output('databank-graph', 'elements'),
-        Output('device', 'options'),
-        Output('device_data', 'options'),
-        Output('service_name', 'options'),
-        Output('service_type', 'options'),
+        # Output('device', 'options'),
+        # Output('device_data', 'options'),
+        # Output('service_name', 'options'),
+        # Output('service_type', 'options'),
         Input('interval-component', 'n_intervals'),
         Input('databank-graph', 'elements'),
         prevent_initial_call=True,)
+def update_metrics(n,elements):
+    global trigger_web_hook,check_finish_load
+    if (trigger_web_hook==1 or len(elements)==0) and check_finish_load==0 :
+        print('update function')
+        check_finish_load=1
+        data = select_device()
+        element=list([])
+        height=800/len(data)
+        node_center = center_nodes(4,2*height,800)
+        # category
+        element.append({
+            "data": {"id": 'category_top_secret', "label": 'Top Secret'},
+            "position": {"x": 350, "y": node_center[3]},
+            "type":"category",
+            "classes":"device_category"
+        })
+        element.append({
+            "data": {"id": 'category_secret', "label": 'Secret'},
+            "position": {"x": 350, "y": node_center[2]},
+            "type":"category",
+            "classes":"device_category"
+        })
+        element.append({
+            "data":{
+                "id":"relation_category_top_secret_to_category_secret",
+                "source":'category_top_secret',
+                "target":'category_secret'
+            },
+            "type":"category_relation",
+            "classes":"device_relation"
+        })
+        element.append({
+            "data": {"id": 'category_private', "label": 'Private'},
+            "position": {"x": 350, "y": node_center[1]},
+            "type":"category",
+            "classes":"device_category"
+        })
+        element.append({
+            "data":{
+                "id":"relation_category_secret_to_category_private",
+                "source":'category_secret',
+                "target":'category_private'
+            },
+            "type":"category_relation",
+            "classes":"device_relation"
+        })
+        element.append({
+            "data": {"id": 'category_public', "label": 'Public'},
+            "position": {"x": 350, "y": node_center[0]},
+            "type":"category",
+            "classes":"device_category"
+        })
+        element.append({
+            "data":{
+                "id":"relation_category_private_to_category_public",
+                "source":'category_private',
+                "target":'category_public'
+            },
+            "type":"category_relation",
+            "classes":"device_relation"
+        })
+        device_data=select_device_data('all')
+        for index,device in enumerate(data):
+            # device
+            element.append({
+                "data": {"id": str(device[0]), "label": device[1]},
+                "position": {"x": 0, "y": index*height},
+                "type":"device",
+                "classes":'device_normal'
+            })
+            item= [item for i, item in enumerate(device_data) if str(item[1]) == str(device[0])][0]
+            # device data
+            element.append({
+                "data": {"id": 'data_'+str(item[0]), "label": item[3]},
+                "position": {"x": 150, "y": index*height},
+                "type":"device_data",
+                "classes":'device_data'
+            })
+            # device relationship
+            element.append({
+                "data":{
+                    "id":"relation_device_"+str(device[0])+"_data_"+str(item[0]),
+                    "source":str(device[0]),
+                    "target":'data_'+str(item[0])
+                },
+                "type":"device_relation",
+                "classes":"no-arrow"
+            })
+            # category relationship
+            element.append({
+                "data":{
+                    "id":"relation_data_"+str(item[0])+"_to_category_"+str(item[4]),
+                    "source":'data_'+str(item[0]),
+                    "target":'category_'+str(item[4]).replace(' ','_')
+                },
+                "type":"device_relation",
+                "classes":"no-arrow"
+            })
+        # cloud category
+        node_center = center_nodes(4,2*height,800)
+        cloud_category = select_cloud_category()
+        old_id = ""
+        for index,cloud in enumerate(cloud_category):
+            element.append({
+                "data": {"id": 'cloud_category_'+cloud[1].lower().replace(' ','_'), "label": cloud[1]},
+                "position": {"x": 700, "y": node_center[index]},
+                "type":"cloud_category",
+                "classes":"cloud_category"
+            })
+            if old_id !="":
+                element.append({
+                    "data":{
+                        "id":"relation_cloud_category_"+cloud[1].lower().replace(' ','_')+"_to_"+old_id,
+                        "source":'cloud_category_'+cloud[1].lower().replace(' ','_'),
+                        "target":old_id
+                    },
+                    "type":"cloud_category_relation",
+                    "classes":"device_relation"
+                })
+            old_id='cloud_category_'+cloud[1].lower().replace(' ','_')
+        element.append({
+            "data":{
+                "id":"relation_cloud_category_encypted_to_cloud_category_anolymise",
+                "source":'cloud_category_encypted',
+                "target":'cloud_category_anolymise'
+            },
+            "type":"cloud_category_relation",
+            "classes":"device_relation"
+        })
+        #action
+        actions = select_action()
+        node_center = center_nodes(len(actions)+1,2*height,800)
+        for index,action in enumerate(actions):
+            element.append({
+                "data": {"id": 'action_'+str(action[0]), "label": action[1]},
+                "position": {"x": 500, "y": node_center[index]},
+                "type":"device_data",
+                "classes":'device_action'
+            })
+            # action relationship
+            element.append({
+                "data":{
+                    "id":"relation_category_"+str(data[2]).replace(' ','_')+"_to_action_"+str(action[0]),
+                    "source":'category_'+str(action[2]).replace(' ','_'),
+                    "target":'action_'+str(action[0])
+                },
+                "type":"device_relation",
+                "classes":"device_relation"
+            })
+            #cloud category with action
+            cloud_with_action =select_action_with_clond_category(action[0])[0]
+            # action relationship with cloud category
+            element.append({
+                "data":{
+                    "id":"relation_action"+str(action[0])+"_to_cloud_category_"+cloud_with_action[3].lower().replace(' ','_'),
+                    "source":'action_'+str(action[0]),
+                    "target":"cloud_category_"+cloud_with_action[3].lower().replace(' ','_')
+                },
+                "type":"device_relation",
+                "classes":"device_relation"
+            })
         
-def update_metrics(n,element):
-    global data,trigger_web_hook,device_graph_list,service_graph_list,relation,device_name,device_data,service_name,service_type,trigger_filter_change,new_value,filter_type,reset_filter_change
-    #filter graph
-    if trigger_filter_change==1:
-        # make element to default
-        no_filter_data= []
-        for data in element:
-            data['classes'] = data['classes'].replace(' not_select', '')
-            no_filter_data.append(data.copy())
-        data_element = []
-        use_element = no_filter_data.copy()
-        if filter_type[0] != None:
-            data=[]
-            company_pair = []
-            new_element = use_element.copy()[::-1]
-            service_data = list()
-            service_array = list()
-            service_sa_array = list()
-            for results in new_element:
-                result = results.copy()
-                if ' not_select' in result['classes']:
-                    result['classes'] = result['classes'].replace(' not_select', '')
-                if result['classes'] == 'device_relation':
-                    if not ('#device_'+new_value[0] in str(result['route']) and '#device_'+new_value[0] in str(result['route'])) :
-                        result['classes'] = result['classes']+" not_select"
-                elif result['classes'] == 'between_relation':
-                    if '#device_'+new_value[0] not in str(result['route']):
-                        result['classes'] = result['classes']+" not_select"
-                    else:
-                        ser_data = result['route'].split("&&")[1]
-                        service_data.append(ser_data)
-                        data_show = ser_data.split('_sa_')
-                        service_array.append(data_show[0])
-                        service_sa_array.append(ser_data)
-                        service_array = list(set(service_array))
-                        service_sa_array = list(set(service_sa_array))
-                elif result['classes'] == 'device_normal' or result['classes'] == 'between_relation' or result['classes'] == 'device_special' or result['classes'] == 'device_type' or result['classes'] == 'device_action_1' or result['classes'] == 'device_action_2' or result['classes'] == 'device_special_2':
-                    if '#device_'+new_value[0] not in str(result['route']) and len([item for item in company_pair if item in str(result['route'])])==0:
-                        result['classes'] = result['classes']+" not_select"
-                elif result['route'] in service_data:
-                    print('-')
-                elif result['classes'] == 'service_relation' or result['classes'] == 'service_normal' or result['classes'] == 'service_trust'  or result['classes'] == 'service_type'  or result['classes'] == 'service_action':
-                    if '_sa_' in result['route']:
-                        if result['route'] not in service_sa_array:
-                            result['classes'] = result['classes']+" not_select"
-                    elif '_#type_' not in result['route']:
-                        data_show = result['route'].split('_#type_')[0]
-                        if len([data for data in service_array if data_show in data])==0:
-                            result['classes'] = result['classes']+" not_select"
-                    else:
-                        if result['route'] not in service_array:
-                            result['classes'] = result['classes']+" not_select"
-                data.append(result.copy())
-            new_data = data[::-1]
-            data_element.append(new_data.copy())
-
-        else:
-            data_element.append(use_element.copy())
-        if filter_type[1] != None:
-            data=[]
-            company_pair = []
-            new_element = use_element.copy()[::-1]
-            service_data = list()
-            service_array = list()
-            service_sa_array = list()
-            device_id = list()
-            for results in new_element:
-                result = results.copy()
-                if ' not_select' in result['classes']:
-                    result['classes'] = result['classes'].replace(' not_select', '')
-                if result['classes'] == 'device_relation':
-                    if not (new_value[1] in str(result['route']) and new_value[1] in str(result['route'])) :
-                        result['classes'] = result['classes']+" not_select"
-                    else:
-                        data_show = result['route'].split('#device_')[1]
-                        data_show = data_show.split('_un_')[0]
-                        device_id.append(data_show)
-                        device_id = list(set(device_id))
-                elif result['classes'] == 'between_relation':
-                    if new_value[1] not in str(result['route']):
-                        result['classes'] = result['classes']+" not_select"
-                    else:
-                        ser_data = result['route'].split("&&")[1]
-                        service_data.append(ser_data)
-                        data_show = ser_data.split('_sa_')
-                        service_array.append(data_show[0])
-                        service_sa_array.append(ser_data)
-                        service_array = list(set(service_array))
-                        service_sa_array = list(set(service_sa_array))
-                elif result['classes'] == 'device_normal' or result['classes'] == 'between_relation' or result['classes'] == 'device_special' or result['classes'] == 'device_type' or result['classes'] == 'device_action_1' or result['classes'] == 'device_action_2' or result['classes'] == 'device_special_2':
-                    if new_value[1] not in str(result['route']) and len([item for item in company_pair if item in str(result['route'])])==0:
-                        result['classes'] = result['classes']+" not_select"
-                elif result['route'] in service_data:
-                    print('-')
-                elif result['classes'] == 'service_relation' or result['classes'] == 'service_normal' or result['classes'] == 'service_trust'  or result['classes'] == 'service_type'  or result['classes'] == 'service_action':
-                    if '#st_' in result['route']:
-                        data_show = result['route'].split('#st_')[1]
-                        data_show = data_show.split('#_sa_')[0]
-                        if len([data for data in service_sa_array if data_show in data])==0:
-                            result['classes'] = result['classes']+" not_select"
-                    elif '_sa_' in result['route']:
-                        if result['route'] not in service_sa_array:
-                            result['classes'] = result['classes']+" not_select"
-                    elif '_#type_' not in result['route']:
-                        data_show = result['route'].split('_#type_')[0]
-                        if len([data for data in service_array if data_show in data])==0:
-                            result['classes'] = result['classes']+" not_select"
-                    else:
-                        if result['route'] not in service_array:
-                            result['classes'] = result['classes']+" not_select"
-                data.append(result.copy())
-            new_data = list()
-            for results in data:
-                result = results.copy()
-                if result['classes'] == 'device_normal not_select':
-                    if '_un_' not in result['route']:
-                        if str(result['route'].split('#device_')[1]) in device_id:
-                            result['classes'] = result['classes'].replace(' not_select', '')
-                new_data.append(result.copy())
-            new_data = new_data[::-1]
-            data_element.append(new_data.copy())
-        else:
-            data_element.append(use_element.copy())
-        if filter_type[2] != None:
-            data=[]
-            device_pair = []
-            new_element = use_element.copy()[::-1]
-            device_data = list()
-            device_array = list()
-            device_un_array = list()
-            for results in new_element:
-                result = results
-                if ' not_select' in result['classes']:
-                    result['classes'] = result['classes'].replace(' not_select', '')
-                if result['classes'] == 'service_relation':
-                    if not ("#service_"+new_value[2] in str(result['route'])) :
-                        result['classes'] = result['classes']+" not_select"
-                elif result['classes'] == 'between_relation':
-                    if "#service_"+new_value[2] not in str(result['route']):
-                        result['classes'] = result['classes']+" not_select"
-                    else:
-                        dev_data = result['route'].split("&&")[0]
-                        device_data.append(dev_data)
-                        data_show = dev_data.split('_un_')
-                        device_array.append(data_show[0])
-                        device_un_array.append(data_show[1])
-                        device_array = list(set(device_array))
-                        device_un_array = list(set(device_un_array))
-                        device_data = list(set(device_data))
-                elif result['classes'] == 'service_normal' or result['classes'] == 'service_trust' or result['classes'] == 'service_type' or result['classes'] == 'service_action':
-                    if "#service_"+new_value[2] not in str(result['route']):
-                        result['classes'] = result['classes']+" not_select"
-                elif result['route'] in device_data:
-                    print('-')
-                elif '_un_' not in result['route']:
-                        dev_device = result['route'].split('#device_')[1]
-                        if len([item for item in device_array if '#device_'+dev_device in item])==0:
-                            result['classes'] = result['classes']+" not_select"
-                else:
-                    dev_un='&--'
-                    dev_sen='&--'
-                    dev_at='&--'
-                    dev_atun='&--'
-                    dev_device = result['route'].split('#device_')[1]
-                    dev_device = dev_device.split('_un_')[0]
-                    if "#atun_" in result['route']:
-                        dev_atun = result['route'].split('#atun_')[1]
-                    if "#at_" in result['route']:
-                        dev_data = result['route'].split('#at_')[1]
-                        dev_at = dev_data.split('#atun_')[0]
-                    if "#sen_" in result['route']:
-                        dev_data = result['route'].split('#sen_')[1]
-                        dev_sen = dev_data.split('#at_')[0]
-                    if "_un_" in result['route']:
-                        dev_data = result['route'].split('_un_')[1]
-                        dev_un = dev_data.split('#')[0]
-                    if (dev_sen == '&--' and dev_at == '&--' and dev_atun == '&--'):
-                        if len([item for item in device_un_array if dev_un in item])==0:
-                            result['classes'] = result['classes']+" not_select"
-                        elif not(len([item for item in device_data if '#device_'+dev_device in item and dev_un in item])>0):
-                            result['classes'] = result['classes']+" not_select"
-                    else :
-                        if not((len([item for item in device_un_array if dev_un in item])>0) and (len([item for item in device_un_array if dev_sen in item])>0 or len([item for item in device_un_array if dev_at in item])>0 or len([item for item in device_un_array if dev_atun in item])>0)):
-                            result['classes'] = result['classes']+" not_select"
-                        elif not(len([item for item in device_data if '#device_'+dev_device in item and dev_un in item])>0):
-                            result['classes'] = result['classes']+" not_select"
-                data.append(result.copy())
-            new_data = data[::-1]
-            data_element.append(new_data.copy())
-        else:
-            data_element.append(use_element.copy())
-        if filter_type[3] != None:
-            data=[]
-            new_element = use_element.copy()[::-1]
-            device_data = list()
-            device_array = list()
-            device_un_array = list()
-            service_id = list()
-            route_array = list()
-            for results in new_element:
-                result = results.copy()
-                if ' not_select' in result['classes']:
-                    result['classes'] = result['classes'].replace(' not_select', '')
-                if result['classes'] == 'service_relation':
-                    if not (new_value[3] in str(result['route'])) :
-                        result['classes'] = result['classes']+" not_select"
-                    else:
-                        data_show = result['route'].split('#service_')[1]
-                        data_show = data_show.split('_#type_')[0]
-                        service_id.append(data_show)
-                        service_id = list(set(service_id))
-                        route_array = list(set(route_array))
-                elif result['classes'] == 'between_relation':
-                    if new_value[3] not in str(result['route']):
-                        result['classes'] = result['classes']+" not_select"
-                    else:
-                        dev_data = result['route'].split("&&")[0]
-                        device_data.append(dev_data)
-                        data_show = dev_data.split('_un_')
-                        device_array.append(data_show[0])
-                        device_un_array.append(data_show[1])
-                        device_array = list(set(device_array))
-                        device_un_array = list(set(device_un_array))
-                        device_data = list(set(device_data))
-                elif result['classes'] == 'service_normal' or result['classes'] == 'service_trust' or result['classes'] == 'service_type' or result['classes'] == 'service_action':
-                    if new_value[3] not in str(result['route']):
-                        result['classes'] = result['classes']+" not_select"
-                elif result['route'] in device_data:
-                    print('-')
-                elif '_un_' not in result['route']:
-                        dev_device = result['route'].split('#device_')[1]
-                        if len([item for item in device_array if '#device_'+dev_device in item])==0:
-                            result['classes'] = result['classes']+" not_select"
-                else:
-                    dev_un='&--'
-                    dev_sen='&--'
-                    dev_at='&--'
-                    dev_atun='&--'
-                    dev_device = result['route'].split('#device_')[1]
-                    dev_device = dev_device.split('_un_')[0]
-                    if "#atun_" in result['route']:
-                        dev_atun = result['route'].split('#atun_')[1]
-                    if "#at_" in result['route']:
-                        dev_data = result['route'].split('#at_')[1]
-                        dev_at = dev_data.split('#atun_')[0]
-                    if "#sen_" in result['route']:
-                        dev_data = result['route'].split('#sen_')[1]
-                        dev_sen = dev_data.split('#at_')[0]
-                    if "_un_" in result['route']:
-                        dev_data = result['route'].split('_un_')[1]
-                        dev_un = dev_data.split('#')[0]
-                    if (dev_sen == '&--' and dev_at == '&--' and dev_atun == '&--'):
-                        if len([item for item in device_un_array if dev_un in item])==0:
-                            result['classes'] = result['classes']+" not_select"
-                        elif not(len([item for item in device_data if '#device_'+dev_device in item and dev_un in item])>0):
-                            result['classes'] = result['classes']+" not_select"
-                    else :
-                        if not((len([item for item in device_un_array if dev_un in item])>0) and (len([item for item in device_un_array if dev_sen in item])>0 or len([item for item in device_un_array if dev_at in item])>0 or len([item for item in device_un_array if dev_atun in item])>0)):
-                            result['classes'] = result['classes']+" not_select"
-                        elif not(len([item for item in device_data if '#device_'+dev_device in item and dev_un in item])>0):
-                            result['classes'] = result['classes']+" not_select"
-                data.append(result.copy())
-            new_data = list()
-            for results in data:
-                result = results.copy()
-                if result['classes'] == 'service_normal not_select':
-                    if '_#type_' not in result['route']:
-                        if str(result['route'].split('#service_')[1]) in service_id:
-                            result['classes'] = result['classes'].replace(' not_select', '')
-                new_data.append(result.copy())
-            new_data = new_data[::-1]
-            data_element.append(new_data.copy())
-        else:
-            data_element.append(use_element.copy())
-        index = 0
-        show_element = []
-        for data in use_element:
-            if not(data_element[0][index] == data_element[1][index]  == data_element[2][index] == data_element[3][index]):
-                data['classes'] = data['classes']+" not_select"
-            show_element.append(data.copy())
-            index += 1
-        element = show_element
-        trigger_filter_change=0
-    if reset_filter_change == 1:
-        data = []
-        for result in element:
-            if ' not_select' in result['classes']:
-                result['classes'] = result['classes'].replace(' not_select', '')
-            data.append(result.copy())
-        element = data
-        reset_filter_change = 0
-    if(trigger_web_hook == 1):
-        with open('./mock_data.json', 'r') as file:
-            datanew = json.load(file)
-        data = datanew["data"]
-        screen_width = datanew["screenWidth"]
-        screen_heigth = datanew["screenHeight"]
-        #def devide screen size for device and service
-        device_screen_width = int(5*screen_width / 8)
-        service_screen_width = int(3*screen_width / 8)
-        device_screen_height = service_screen_heigth = screen_heigth
-
-        devices, services = create_elements(data) # get devices and services from data
-        # get device name and device_data
-        device_name = []
-        device_data = []
-        for key in datanew['data']['devices'].keys():
-            name = datanew['data']['devices'][key]['device_name']
-            device_name.append({'label': name, 'value': key})
-            if datanew['data']['devices'][key]['device_unprocessed'] != None:
-                for data in datanew['data']['devices'][key]['device_unprocessed']:
-                    device_data.append({'label': data, 'value': data})
-        service_name = []
-        service_type = []
-        for key in datanew['data']['services'].keys():
-            name = datanew['data']['services'][key]['service_name']
-            com_type = datanew['data']['services'][key]['service_type']
-            service_name.append({'label': name, 'value': key})
-            service_type.append({'label': com_type, 'value': com_type})
-        # make array unique
-        unique_list = []
-        [unique_list.append(item) for item in device_name if item not in unique_list]
-        device_name = unique_list
-        unique_list = []
-        [unique_list.append(item) for item in device_data if item not in unique_list]
-        device_data = unique_list
-        unique_list = []
-        [unique_list.append(item) for item in service_name if item not in unique_list]
-        service_name = unique_list
-        unique_list = []
-        [unique_list.append(item) for item in service_type if item not in unique_list]
-        service_type = unique_list
-        home_tree = create_home_tree(devices=devices) # make tree for device
-        if home_tree is not None:
-            home_tree.print_tree(show_id=True, show_level=True)
-        #gen grapg for visual for device
-        device_graph_list = []
-        if len(devices):
-            device_graph_list = home_tree.gen_data_visual_home(
-            top_x=0,
-            top_y=0,
-            screen_width=device_screen_width,
-            screen_height=device_screen_height,
-            show_home_node=False  #start from device node
-            )
-
-        # prepare node for service
-        service_graph_list = []
-        companyTree =[]
-        if len(services):
-            companyTree = create_company_tree(services=services)
-            companyTree.print_tree(show_id=True, show_level=True)
-            # get service node and edge element to generate graph
-            service_graph_list = companyTree.gen_data_visual_company(
-                top_x=service_screen_width,
-                top_y=0,
-                screen_width=service_screen_width,
-                screen_height=service_screen_heigth,
-                show_company_node=False,
-                home=home_tree,
-            ),
-            flat_list = []
-            for element in service_graph_list:
-                flat_list.extend(element)
-            service_graph_list = flat_list
-            # create relation edge
-            # relation = []
-            relation = (create_relation_service_device(home=home_tree, company=companyTree))
+        #service category
+        service_categories = select_service_category()
+        node_center = center_nodes(len(service_categories)+1,2*height,800)
+        for index,category in enumerate(service_categories):
+            element.append({
+                "data": {"id": 'service_category_'+str(category[0]), "label": category[1]},
+                "position": {"x": 1100, "y": node_center[index]},
+                "type":"service_category",
+                "classes":'service_category'
+            })
+        #service action
+        service_actions = select_service_action()
+        node_center = center_nodes(len(service_actions)+1,2*height,800)
+        for index,action in enumerate(service_actions):
+            element.append({
+                "data": {"id": 'service_action_'+str(action[0]), "label": action[3]},
+                "position": {"x": 900, "y": node_center[index]},
+                "type":"service_category",
+                "classes":'service_action'
+            })
+            element.append({
+                "data":{
+                    "id":"relation_service_action_"+str(action[0])+"_to_cloud_category_"+str(action[4]).lower().replace(' ','_'),
+                    "source":"service_action_"+str(action[0]),
+                    "target":"cloud_category_"+str(action[4]).lower().replace(' ','_')
+                },
+                "type":"service_relation",
+                "classes":"device_relation"
+            })
+            element.append({
+                "data":{
+                    "id":"relation_service_category_"+str(action[0])+"_to_service_action_"+str(action[0]),
+                    "source":'service_category_'+str(action[1]),
+                    "target":"service_action_"+str(action[0])
+                },
+                "type":"service_relation",
+                "classes":"device_relation"
+            })
+        #service
+        services = select_service()
+        height=800/len(services)
+        for index,service in enumerate(services):
+            element.append({
+                "data": {"id": 'service_'+str(service[0]), "label": service[1]},
+                "position": {"x": 1300, "y": index*height},
+                "type":"service",
+                "classes":'service_normal'
+            })
+            #service category relationship
+            category = select_service_category_by_service(service[0])
+            for index,cat in enumerate(category):
+                element.append({
+                    "data":{
+                        "id":"relation_service_"+str(service[0])+"_to_service_category_"+str(cat[0]),
+                        "source":'service_'+str(service[0]),
+                        "target":"service_category_"+str(cat[0])
+                    },
+                    "type":"service_relation",
+                    "classes":"device_relation"
+                })
         trigger_web_hook=0
-        data = datanew
-        return (device_graph_list) + (service_graph_list) + relation,device_name,device_data,service_name,service_type
-    return  element,device_name,device_data,service_name,service_type
+        check_finish_load=0
+        return element
+    return elements
 
 app.layout = html.Div(
     [
-        html.Link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"),
-        html.Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0/select2.min.css"),
-        html.Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-5-theme/1.4.0/select2-bootstrap.min.css"),
-        html.Script(src="https://code.jquery.com/jquery-3.6.4.min.js"),
-        html.Script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"),
-        html.Script(src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0/select2.min.js"),
-        # popup element
+        # html.Link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"),
+        # html.Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0/select2.min.css"),
+        # html.Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-5-theme/1.4.0/select2-bootstrap.min.css"),
+        # html.Script(src="https://code.jquery.com/jquery-3.6.4.min.js"),
+        # html.Script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"),
+        # html.Script(src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0/select2.min.js"),
+        # # popup element
         html.Div(id="node-popup", style={"position": "absolute", "display": "none"}),
         html.Div(id="edge-popup", style={"position": "absolute", "display": "none"}),
-        html.Div(
-            children=[
-                html.Div(
-                    children=[
-                        dcc.Dropdown(
-                            id='device',
-                            options=[],
-                            value=None,  # Default selected value
-                            placeholder="Select a device",  # Placeholder text
-                        ),
-                    ],
-                    style={
-                    'width':'23%',
-                    'padding':'10px',
-                }),
-                html.Div(
-                    children=[
-                        dcc.Dropdown(
-                            id='device_data',
-                            options=[],
-                            value=None,  # Default selected value
-                            placeholder="Select a device data",  # Placeholder text
-                        ),
-                    ],
-                    style={
-                    'width':'23%',
-                    'padding':'10px',
-                }),
-                html.Div(
-                    children=[
-                        dcc.Dropdown(
-                            id='service_name',
-                            options=[],
-                            value=None,  # Default selected value
-                            placeholder="Select an service name",  # Placeholder text
-                        ),
-                    ],
-                    style={
-                    'width':'23%',
-                    'padding':'10px',
-                }),
-                html.Div(
-                    children=[
-                        dcc.Dropdown(
-                            id='service_type',
-                            options=[],
-                            value=None,  # Default selected value
-                            placeholder="Select an service detail",  # Placeholder text
-                        ),
-                    ],
-                    style={
-                    'width':'23%',
-                    'padding':'10px',
-                }),
-                html.Div(
-                    children=[
-                        html.Button('Reset', id='clear_filter',className='btn btn-primary')
-                    ],
-                    style={
-                    'width':'8%',
-                    'padding':'10px',
-                }),
-            ],
-            style={
-                "display":"flex",
-            },
-        ),
+        # html.Div(
+        #     children=[
+        #         html.Div(
+        #             children=[
+        #                 dcc.Dropdown(
+        #                     id='device',
+        #                     options=[],
+        #                     value=None,  # Default selected value
+        #                     placeholder="Select a device",  # Placeholder text
+        #                 ),
+        #             ],
+        #             style={
+        #             'width':'23%',
+        #             'padding':'10px',
+        #         }),
+        #         html.Div(
+        #             children=[
+        #                 dcc.Dropdown(
+        #                     id='device_data',
+        #                     options=[],
+        #                     value=None,  # Default selected value
+        #                     placeholder="Select a device data",  # Placeholder text
+        #                 ),
+        #             ],
+        #             style={
+        #             'width':'23%',
+        #             'padding':'10px',
+        #         }),
+        #         html.Div(
+        #             children=[
+        #                 dcc.Dropdown(
+        #                     id='service_name',
+        #                     options=[],
+        #                     value=None,  # Default selected value
+        #                     placeholder="Select an service name",  # Placeholder text
+        #                 ),
+        #             ],
+        #             style={
+        #             'width':'23%',
+        #             'padding':'10px',
+        #         }),
+        #         html.Div(
+        #             children=[
+        #                 dcc.Dropdown(
+        #                     id='service_type',
+        #                     options=[],
+        #                     value=None,  # Default selected value
+        #                     placeholder="Select an service detail",  # Placeholder text
+        #                 ),
+        #             ],
+        #             style={
+        #             'width':'23%',
+        #             'padding':'10px',
+        #         }),
+        #         html.Div(
+        #             children=[
+        #                 html.Button('Reset', id='clear_filter',className='btn btn-primary')
+        #             ],
+        #             style={
+        #             'width':'8%',
+        #             'padding':'10px',
+        #         }),
+        #     ],
+        #     style={
+        #         "display":"flex",
+        #     },
+        # ),
         # show graph
         cyto.Cytoscape(
             id="databank-graph",
             layout={"name": "preset", 'spacingFactor': 0.8,},
             style={
                 "width": "99%",
-                "height": "882px",
+                "height": "92vh",
                 "position": "absolute",
             },
             maxZoom=20,
             minZoom=0.1,
             autolock=False,
             autounselectify=False,
-            elements=[],
+            elements=element,
             stylesheet=stylesheet,
             boxSelectionEnabled=True
         ),
@@ -517,61 +1009,156 @@ app.layout = html.Div(
             interval=2*1000, 
             n_intervals=0
         ),
+        # show mark
+        html.Div(
+            children=[
+                html.Div(
+                    children=[
+                        html.Div(
+                            children=[
+                                html.Div("", style={
+                                    'width': '24px',
+                                    'height': '24px',
+                                    'backgroundColor': '#148f77',
+                                    'borderRadius': '20px',
+                                    'marginRight':'2px',
+                                }),
+                                html.Div("Device", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}), 
+                                html.Div("", style={
+                                    'width': '24px',
+                                    'height': '24px',
+                                    'backgroundColor': '#8f7714',
+                                    'borderRadius': '20px',
+                                    'marginRight':'2px',
+                                }),
+                                html.Div("Device Data", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}), 
+                                html.Div("", style={
+                                    'width': '24px',
+                                    'height': '24px',
+                                    'backgroundColor': '#77148f',
+                                    'borderRadius': '20px',
+                                    'marginRight':'2px',
+                                }),
+                                html.Div("Category", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}),
+                                html.Div("", style={
+                                    'width': '24px',
+                                    'height': '24px',
+                                    'backgroundColor': '#146a8f',
+                                    'borderRadius': '20px',
+                                    'marginRight':'2px',
+                                }),
+                                html.Div("Action", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}),
+                                html.Div("", style={
+                                    'width': '24px',
+                                    'height': '24px',
+                                    'backgroundColor': '#3145e5',
+                                    'borderRadius': '20px',
+                                    'marginRight':'2px',
+                                }),
+                                html.Div("Cloud Category", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}), 
+                                html.Div("", style={
+                                    'width': '24px',
+                                    'height': '24px',
+                                    'backgroundColor': '#d131e5',
+                                    'borderRadius': '20px',
+                                    'marginRight':'2px',
+                                }),
+                                html.Div("Service Action", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}),
+                                html.Div("", style={
+                                    'width': '24px',
+                                    'height': '24px',
+                                    'backgroundColor': '#e5319f',
+                                    'borderRadius': '20px',
+                                    'marginRight':'2px',
+                                }),
+                                html.Div("Service Category", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}),
+                                html.Div("", style={
+                                    'width': '24px',
+                                    'height': '24px',
+                                    'backgroundColor': '#e53145',
+                                    'borderRadius': '20px',
+                                    'marginRight':'2px',
+                                }),
+                                html.Div("Service", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'})   
+                            ],
+                            style={
+                                "display":'flex',
+                                'padding':'10px',
+                            }
+                        ),
+                    ],
+                    style={
+                        "position":"absolute",
+                        "bottom":"5%",
+                        "left":"50%",
+                        "transform":'translateX(-50%)'
+                    },
+                ),
+            ],
+            id="show_mark",
+            style={
+                "width":"100vw",
+                "height":"100vh",
+                "zIndex":'-1',
+                "position":"relative"
+            }
+        )
     ]
 )
 # select filter
-@app.callback(
-    Input("device",'value'),
-    Input("device_data",'value'),
-    Input("service_name",'value'),
-    Input("service_type",'value'),
-    prevent_initial_call=True
-)
-def device_name_click(value,value_data,value_company,value_type):
-    global new_value,trigger_filter_change,filter_type,reset_filter_change
-    # select device name
-    if value != None:
-        new_value[0] = value
-        filter_type[0] = 'device'
-    else:
-        new_value[0] = None
-        filter_type[0] = None
-    # select device data
-    if value_data != None:
-        new_value[1] = value_data.replace(' ','_')
-        filter_type[1] = 'device_data'
-    else:
-        new_value[1] = None
-        filter_type[1] = None
-    # select company name
-    if value_company != None:
-        new_value[2] = value_company
-        filter_type[2] = 'service_name'
-    else:
-        new_value[2] = None
-        filter_type[2] = None
-    # select company type
-    if value_type != None:
-        new_value[3] = value_type.replace(' ','_')
-        filter_type[3] = 'service_type'
-    else:
-        new_value[3] = None
-        filter_type[3] = None
-    trigger_filter_change = 1
+# @app.callback(
+#     Input("device",'value'),
+#     Input("device_data",'value'),
+#     Input("service_name",'value'),
+#     Input("service_type",'value'),
+#     prevent_initial_call=True
+# )
+# def device_name_click(value,value_data,value_company,value_type):
+#     global new_value,trigger_filter_change,filter_type,reset_filter_change
+#     # select device name
+#     if value != None:
+#         new_value[0] = value
+#         filter_type[0] = 'device'
+#     else:
+#         new_value[0] = None
+#         filter_type[0] = None
+#     # select device data
+#     if value_data != None:
+#         new_value[1] = value_data.replace(' ','_')
+#         filter_type[1] = 'device_data'
+#     else:
+#         new_value[1] = None
+#         filter_type[1] = None
+#     # select company name
+#     if value_company != None:
+#         new_value[2] = value_company
+#         filter_type[2] = 'service_name'
+#     else:
+#         new_value[2] = None
+#         filter_type[2] = None
+#     # select company type
+#     if value_type != None:
+#         new_value[3] = value_type.replace(' ','_')
+#         filter_type[3] = 'service_type'
+#     else:
+#         new_value[3] = None
+#         filter_type[3] = None
+#     trigger_filter_change = 1
 
 # select company type
-@app.callback(
-    Output("device",'value'),
-    Output("device_data",'value'),
-    Output("service_name",'value'),
-    Output("service_type",'value'),
-    Input("clear_filter",'n_clicks'),
-    prevent_initial_call=True
-)
-def button_click(value):
-    global reset_filter_change
-    reset_filter_change = 1
-    return None,None,None,None
+# @app.callback(
+#     Output("device",'value'),
+#     Output("device_data",'value'),
+#     Output("service_name",'value'),
+#     Output("service_type",'value'),
+#     Input("clear_filter",'n_clicks'),
+#     prevent_initial_call=True
+# )
+# def button_click(value):
+#     global reset_filter_change
+#     reset_filter_change = 1
+#     return None,None,None,None
+
 # function show popup when select
 @app.callback(
     [
@@ -644,20 +1231,20 @@ def display_hover_popup(tapNode,tapEdge,elements,selectedNodeData,selectedEdgeDa
 
 
 
-@server.route("/webhook", methods=['POST'])
-def webhook():
-    global trigger_web_hook
-    try:
-        dataNew = request.get_json()
-        with open('mock_data.json', 'w') as file:
-            json.dump(dataNew, file, indent=4)
-        trigger_web_hook = 1
-        return jsonify({"status": "success", "message": f"Processed data success","data": 'success'}), 200
-    except Exception as e:
-        dataNew = {'data':{'devices':{},'services':{}},'screenWidth':1920}
-        return jsonify({"status": "error", "message": str(e)}), 500
+# @server.route("/webhook", methods=['POST'])
+# def webhook():
+#     global trigger_web_hook
+#     try:
+#         dataNew = request.get_json()
+#         with open('mock_data.json', 'w') as file:
+#             json.dump(dataNew, file, indent=4)
+#         trigger_web_hook = 1
+#         return jsonify({"status": "success", "message": f"Processed data success","data": 'success'}), 200
+#     except Exception as e:
+#         dataNew = {'data':{'devices':{},'services':{}},'screenWidth':1920}
+#         return jsonify({"status": "error", "message": str(e)}), 500
 
 
 if __name__ == "__main__":
-    app.run(port=5000,)  # type: ignore
-    # app.run(debug=True)
+    # app.run(port=5000,)  # type: ignore
+    app.run(debug=True)

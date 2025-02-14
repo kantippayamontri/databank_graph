@@ -15,25 +15,25 @@ stylesheet = [
         "style": {"background-color": "#148f77", "content": "data(label)"},
     },
     {
-        "selector": ".device_type",
+        "selector": ".device_data",
         "style": {"background-color": "#8f7714", "content": "data(label)"},
     },
     {
-        "selector": ".device_action_1",
+        "selector": ".device_category",
         "style": {"background-color": "#77148f", "content": "data(label)"},
     },
     {
-        "selector": ".device_action_2",
+        "selector": ".device_action",
         "style": {"background-color": "#146a8f", "content": "data(label)"},
     },
-    {
-        "selector": ".device_special",
-        "style": {"background-color": "#f39c12", "content": "data(label)"},
-    },
-    {
-        "selector": ".device_special_2",
-        "style": {"background-color": "#85C024", "content": "data(label)"},
-    },
+    # {
+    #     "selector": ".device_special",
+    #     "style": {"background-color": "#f39c12", "content": "data(label)"},
+    # },
+    # {
+    #     "selector": ".device_special_2",
+    #     "style": {"background-color": "#85C024", "content": "data(label)"},
+    # },
     # Company node
     {
         "selector": ".company",
@@ -46,16 +46,20 @@ stylesheet = [
     },
 
     {
-        "selector": ".service_trust",
+        "selector": ".service_action",
         "style": {"background-color": "#d131e5", "content": "data(label)"},
     },
     {
-        "selector": ".service_type",
+        "selector": ".service_category",
         "style": {"background-color": "#e5319f", "content": "data(label)"},
     },
     {
-        "selector": ".service_action",
+        "selector": ".cloud_category",
         "style": {"background-color": "#3145e5", "content": "data(label)"},
+    },
+    {
+        "selector": ".cloud_store",
+        "style": {"background-color": "#836953", "content": "data(label)"},
     },
     # Device relation
     {
@@ -90,6 +94,8 @@ stylesheet = [
         'selector': 'edge',
         'style': {
             'width': 2,
+            # 'target-arrow-shape': 'none',
+            'curve-style': 'bezier',
         }
     },
     {
@@ -99,7 +105,15 @@ stylesheet = [
             'line-color': '#FF4136',
             'target-arrow-color': '#FF4136',
             'source-arrow-color': '#FF4136',
-            'dash-array': '5, 5'
+            'dash-array': '5, 5',
+            # 'target-arrow-shape': 'none'
+        }
+    },
+    {
+        'selector': '.no-arrow',
+        'style': {
+            # 'line-color': 'red',
+            'target-arrow-shape': 'none'
         }
     },
     # Edge selected does not filter
@@ -128,6 +142,15 @@ stylesheet = [
             'line-color': '#D0D0D0',
             'target-arrow-color': '#D0D0D0',
             'source-arrow-color': '#D0D0D0',
+        }
+    },
+    {
+        'selector': '.circle',
+        'style': {
+            'width': '100px',
+            'height': '100px',
+            'background-color': '#0074D9',
+            'border-radius': '50%'
         }
     },
 ]
