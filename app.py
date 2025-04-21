@@ -48,241 +48,238 @@ def center_nodes(num_nodes, node_height, container_height):
     
     return y_positions
 # first load
-data = select_device()
-element=list([])
-height=800/len(data)
-node_center = center_nodes(4,2*height,800)
-# category
-element.append({
-    "data": {"id": 'category_top_secret', "label": 'Top Secret'},
-    "position": {"x": 400, "y": node_center[3]},
-    "type":"category",
-    "classes":"device_category"
-})
-element.append({
-    "data": {"id": 'category_secret', "label": 'Secret'},
-    "position": {"x": 450, "y": node_center[2]},
-    "type":"category",
-    "classes":"device_category"
-})
-element.append({
-    "data":{
-        "id":"relation_category_secret_to_category_top_secret",
-        "source":'category_secret',
-        "target":'category_top_secret'
-    },
-    "type":"category_relation",
-    "classes":"device_relation"
-})
-element.append({
-    "data": {"id": 'category_private', "label": 'Private'},
-    "position": {"x": 500, "y": node_center[1]},
-    "type":"category",
-    "classes":"device_category"
-})
-element.append({
-    "data":{
-        "id":"relation_category_private_to_category_secret",
-        "source":'category_private',
-        "target":'category_secret'
-    },
-    "type":"category_relation",
-    "classes":"device_relation"
-})
-element.append({
-    "data": {"id": 'category_public', "label": 'Public'},
-    "position": {"x": 550, "y": node_center[0]},
-    "type":"category",
-    "classes":"device_category"
-})
-element.append({
-    "data":{
-        "id":"relation_category_public_to_category_private",
-        "source":'category_public',
-        "target":'category_private'
-    },
-    "type":"category_relation",
-    "classes":"device_relation"
-})
-device_data=select_device_data('all')
-for index,device in enumerate(data):
-    # device
-    element.append({
-        "data": {"id": str(device[0]), "label": device[1]},
-        "position": {"x": 0, "y": index*height},
-        "type":"device",
-        "classes":'device_normal'
-    })
-    item= [item for i, item in enumerate(device_data) if str(item[1]) == str(device[0])][0]
-    # device data
-    element.append({
-        "data": {"id": 'data_'+str(item[0]), "label": item[3]},
-        "position": {"x": 150, "y": index*height},
-        "type":"device_data",
-        "classes":'device_data'
-    })
-    # device relationship
-    element.append({
-        "data":{
-            "id":"relation_device_"+str(device[0])+"_data_"+str(item[0]),
-            "source":str(device[0]),
-            "target":'data_'+str(item[0])
-        },
-        "type":"device_relation",
-        "classes":"no-arrow"
-    })
-    # category relationship
-    element.append({
-        "data":{
-            "id":"relation_data_"+str(item[0])+"_to_category_"+str(item[4]),
-            "source":'data_'+str(item[0]),
-            "target":'category_'+str(item[4]).replace(' ','_')
-        },
-        "type":"device_relation",
-        "classes":"no-arrow"
-    })
-# cloud category
-node_center = center_nodes(4,2*height,800)
-cloud_category = select_cloud_category()
-old_id = ""
-for index,cloud in enumerate(cloud_category):
-    element.append({
-        "data": {"id": 'cloud_category_'+cloud[1].lower().replace(' ','_'), "label": cloud[1]},
-        "position": {"x": 850, "y": node_center[index]},
-        "type":"cloud_category",
-        "classes":"cloud_category"
-    })
-    element.append({
-        "data": {"id": 'stored_'+cloud[1].lower().replace(' ','_'), "label": 'Store '+cloud[1].split(' ')[0]},
-        "position": {"x": 750, "y": node_center[index]-30},
-        "type":"cloud_category",
-        "classes":"cloud_store"
-    })
-    element.append({
-        "data":{
-            "id":"relation_stored_"+cloud[1].lower().replace(' ','_')+"_to_cloud_category_"+cloud[1].lower().replace(' ','_'),
-            "source":'stored_'+cloud[1].lower().replace(' ','_'),
-            "target":'cloud_category_'+cloud[1].lower().replace(' ','_')
-        },
-        "type":"cloud_category_relation",
-        "classes":"no-arrow"
-    })
-    if old_id !="":
-        element.append({
-            "data":{
-                "id":"relation_"+old_id+"_to_cloud_category_"+cloud[1].lower().replace(' ','_'),
-                "source":old_id,
-                "target":'cloud_category_'+cloud[1].lower().replace(' ','_')
-            },
-            "type":"cloud_category_relation",
-            "classes":"device_relation"
-        })
-    old_id='cloud_category_'+cloud[1].lower().replace(' ','_')
-#action
-actions = select_action()
-node_center = center_nodes(len(actions)+1,2*height,800)
-for index,action in enumerate(actions):
-    element.append({
-        "data": {"id": 'action_'+str(action[0]), "label": action[1]},
-        "position": {"x": 650, "y": node_center[index]},
-        "type":"device_data",
-        "classes":'device_action'
-    })
-    # action relationship
-    element.append({
-        "data":{
-            "id":"relation_category_"+str(data[2]).replace(' ','_')+"_to_action_"+str(action[0]),
-            "source":'category_'+str(action[2]).replace(' ','_'),
-            "target":'action_'+str(action[0])
-        },
-        "type":"device_relation",
-        "classes":"no-arrow"
-    })
-    #cloud category with action
-    cloud_with_action =select_action_with_clond_category(action[0])[0]
-    # action relationship with cloud category
-    element.append({
-        "data":{
-            "id":"relation_action"+str(action[0])+"_to_cloud_category_"+cloud_with_action[3].lower().replace(' ','_'),
-            "source":'action_'+str(action[0]),
-            "target":"cloud_category_"+cloud_with_action[3].lower().replace(' ','_')
-        },
-        "type":"device_relation",
-        "classes":"no-arrow"
-    })
+# data = select_device()
+# element=list([])
+# height=800/len(data)
+# node_center = center_nodes(4,2*height,800)
+# # category
+# element.append({
+#     "data": {"id": 'category_top_secret', "label": 'Top Secret'},
+#     "position": {"x": 400, "y": node_center[3]},
+#     "type":"category",
+#     "classes":"device_category"
+# })
+# element.append({
+#     "data": {"id": 'category_secret', "label": 'Secret'},
+#     "position": {"x": 450, "y": node_center[2]},
+#     "type":"category",
+#     "classes":"device_category"
+# })
+# element.append({
+#     "data":{
+#         "id":"relation_category_secret_to_category_top_secret",
+#         "source":'category_secret',
+#         "target":'category_top_secret'
+#     },
+#     "type":"category_relation",
+#     "classes":"device_relation"
+# })
+# element.append({
+#     "data": {"id": 'category_private', "label": 'Private'},
+#     "position": {"x": 500, "y": node_center[1]},
+#     "type":"category",
+#     "classes":"device_category"
+# })
+# element.append({
+#     "data":{
+#         "id":"relation_category_private_to_category_secret",
+#         "source":'category_private',
+#         "target":'category_secret'
+#     },
+#     "type":"category_relation",
+#     "classes":"device_relation"
+# })
+# element.append({
+#     "data": {"id": 'category_public', "label": 'Public'},
+#     "position": {"x": 550, "y": node_center[0]},
+#     "type":"category",
+#     "classes":"device_category"
+# })
+# element.append({
+#     "data":{
+#         "id":"relation_category_public_to_category_private",
+#         "source":'category_public',
+#         "target":'category_private'
+#     },
+#     "type":"category_relation",
+#     "classes":"device_relation"
+# })
+# device_data=select_device_data('all')
+# for index,device in enumerate(data):
+#     # device
+#     element.append({
+#         "data": {"id": str(device[0]), "label": device[1]},
+#         "position": {"x": 0, "y": index*height},
+#         "type":"device",
+#         "classes":'device_normal'
+#     })
+#     item= [item for i, item in enumerate(device_data) if str(item[1]) == str(device[0])][0]
+#     # device data
+#     element.append({
+#         "data": {"id": 'data_'+str(item[0]), "label": item[3]},
+#         "position": {"x": 150, "y": index*height},
+#         "type":"device_data",
+#         "classes":'device_data'
+#     })
+#     # device relationship
+#     element.append({
+#         "data":{
+#             "id":"relation_device_"+str(device[0])+"_data_"+str(item[0]),
+#             "source":str(device[0]),
+#             "target":'data_'+str(item[0])
+#         },
+#         "type":"device_relation",
+#         "classes":"no-arrow"
+#     })
+#     # category relationship
+#     element.append({
+#         "data":{
+#             "id":"relation_data_"+str(item[0])+"_to_category_"+str(item[4]),
+#             "source":'data_'+str(item[0]),
+#             "target":'category_'+str(item[4]).replace(' ','_')
+#         },
+#         "type":"device_relation",
+#         "classes":"no-arrow"
+#     })
+# # cloud category
+# node_center = center_nodes(4,2*height,800)
+# cloud_category = select_cloud_category()
+# old_id = ""
+# for index,cloud in enumerate(cloud_category):
+#     element.append({
+#         "data": {"id": 'cloud_category_'+cloud[1].lower().replace(' ','_'), "label": cloud[1]},
+#         "position": {"x": 850, "y": node_center[index]},
+#         "type":"cloud_category",
+#         "classes":"cloud_category"
+#     })
+#     element.append({
+#         "data": {"id": 'stored_'+cloud[1].lower().replace(' ','_'), "label": 'Stored '+cloud[1].split(' ')[0]},
+#         "position": {"x": 750, "y": node_center[index]-30},
+#         "type":"cloud_category",
+#         "classes":"cloud_store"
+#     })
+#     element.append({
+#         "data":{
+#             "id":"relation_stored_"+cloud[1].lower().replace(' ','_')+"_to_cloud_category_"+cloud[1].lower().replace(' ','_'),
+#             "source":'stored_'+cloud[1].lower().replace(' ','_'),
+#             "target":'cloud_category_'+cloud[1].lower().replace(' ','_')
+#         },
+#         "type":"cloud_category_relation",
+#         "classes":"no-arrow"
+#     })
+#     if old_id !="":
+#         element.append({
+#             "data":{
+#                 "id":"relation_"+old_id+"_to_cloud_category_"+cloud[1].lower().replace(' ','_'),
+#                 "source":old_id,
+#                 "target":'cloud_category_'+cloud[1].lower().replace(' ','_')
+#             },
+#             "type":"cloud_category_relation",
+#             "classes":"no-arrow"
+#         })
+#     old_id='cloud_category_'+cloud[1].lower().replace(' ','_')
+# #action
+# actions = select_action()
+# node_center = center_nodes(len(actions)+1,2*height,800)
+# for index,action in enumerate(actions):
+#     element.append({
+#         "data": {"id": 'action_'+str(action[0]), "label": action[1]},
+#         "position": {"x": 650, "y": node_center[index]},
+#         "type":"device_data",
+#         "classes":'device_action'
+#     })
+#     # action relationship
+#     element.append({
+#         "data":{
+#             "id":"relation_category_"+str(data[2]).replace(' ','_')+"_to_action_"+str(action[0]),
+#             "source":'category_'+str(action[2]).replace(' ','_'),
+#             "target":'action_'+str(action[0])
+#         },
+#         "type":"device_relation",
+#         "classes":"no-arrow"
+#     })
+#     #cloud category with action
+#     cloud_with_action =select_action_with_clond_category(action[0])[0]
+#     # action relationship with cloud category
+#     element.append({
+#         "data":{
+#             "id":"relation_action"+str(action[0])+"_to_cloud_category_"+cloud_with_action[3].lower().replace(' ','_'),
+#             "source":'action_'+str(action[0]),
+#             "target":"cloud_category_"+cloud_with_action[3].lower().replace(' ','_')
+#         },
+#         "type":"device_relation",
+#         "classes":"no-arrow"
+#     })
 
-#service category
-service_categories = select_service_category()
-node_center = center_nodes(len(service_categories)+1,2*height,800)
-old_id=""
-for index,category in enumerate(service_categories):
-    element.append({
-        "data": {"id": 'service_category_'+str(category[0]), "label": category[1]},
-        "position": {"x": 1150+(50*index), "y": node_center[index]},
-        "type":"service_category",
-        "classes":'service_category'
-    })
-    if old_id !="":
-        element.append({
-            "data":{
-                "id":"relation_"+old_id+"_to_service_category_"+str(category[0]),
-                "source":"service_category_"+str(category[0]),
-                "target":old_id
-            },
-            "type":"cloud_category_relation",
-            "classes":"device_relation"
-        })
-    old_id='service_category_'+str(category[0])
-#service action
-service_actions = select_service_action()
-node_center = center_nodes(len(service_actions)+1,2*height,800)
-for index,action in enumerate(service_actions):
-    element.append({
-        "data": {"id": 'service_action_'+str(action[0]), "label": action[3]},
-        "position": {"x": 1000, "y": node_center[index]},
-        "type":"service_category",
-        "classes":'service_action'
-    })
-    element.append({
-        "data":{
-            "id":"relation_service_action_"+str(action[0])+"_to_cloud_category_"+str(action[4]).lower().replace(' ','_'),
-            "source":"service_action_"+str(action[0]),
-            "target":"cloud_category_"+str(action[4]).lower().replace(' ','_')
-        },
-        "type":"service_relation",
-        "classes":"no-arrow"
-    })
-    element.append({
-        "data":{
-            "id":"relation_service_category_"+str(action[0])+"_to_service_action_"+str(action[0]),
-            "source":'service_category_'+str(action[1]),
-            "target":"service_action_"+str(action[0])
-        },
-        "type":"service_relation",
-        "classes":"no-arrow"
-    })
-#service
-services = select_service()
-height=800/len(services)
-for index,service in enumerate(services):
-    element.append({
-        "data": {"id": 'service_'+str(service[0]), "label": service[1]},
-        "position": {"x": 1600, "y": index*height},
-        "type":"service",
-        "classes":'service_normal'
-    })
-    #service category relationship
-    category = select_service_category_by_service(service[0])
-    for index,cat in enumerate(category):
-        element.append({
-            "data":{
-                "id":"relation_service_"+str(service[0])+"_to_service_category_"+str(cat[0]),
-                "source":'service_'+str(service[0]),
-                "target":"service_category_"+str(cat[0])
-            },
-            "type":"service_relation",
-            "classes":"no-arrow"
-        })
+# #service category
+# service_categories = select_service_category()
+# node_center = center_nodes(len(service_categories)+1,2*height,800)
+# old_id=""
+# for index,category in enumerate(service_categories):
+#     element.append({
+#         "data": {"id": 'service_category_'+str(category[0]), "label": category[1]},
+#         "position": {"x": 1150+(50*index), "y": node_center[index]},
+#         "type":"service_category",
+#         "classes":'service_category'
+#     })
+#     if old_id !="":
+#         element.append({
+#             "data":{
+#                 "id":"relation_"+old_id+"_to_service_category_"+str(category[0]),
+#                 "source":"service_category_"+str(category[0]),
+#                 "target":old_id
+#             },
+#             "type":"cloud_category_relation",
+#             "classes":"device_relation"
+#         })
+#     old_id='service_category_'+str(category[0])
+# #service action
+# service_actions = select_service_action()
+# node_center = center_nodes(len(service_actions)+1,2*height,800)
+# for index,action in enumerate(service_actions):
+#     element.append({
+#         "data": {"id": 'service_action_'+str(action[0]), "label": action[3]},
+#         "position": {"x": 1000, "y": node_center[index]},
+#         "type":"service_category",
+#         "classes":'service_action'
+#     })
+#     element.append({
+#         "data":{
+#             "id":"relation_service_action_"+str(action[0])+"_to_cloud_category_"+str(action[4]).lower().replace(' ','_'),
+#             "source":"service_action_"+str(action[0]),
+#             "target":"cloud_category_"+str(action[4]).lower().replace(' ','_')
+#         },
+#         "type":"service_relation",
+#         "classes":"no-arrow"
+#     })
+#     element.append({
+#         "data":{
+#             "id":"relation_service_category_"+str(action[0])+"_to_service_action_"+str(action[0]),
+#             "source":'service_category_'+str(action[1]),
+#             "target":"service_action_"+str(action[0])
+#         },
+#         "type":"service_relation",
+#         "classes":"no-arrow"
+#     })
+# #service
+# services = select_service()
+# height=800/len(services)
+# for index,service in enumerate(services):
+#     element.append({
+#         "data": {"id": 'service_'+str(service[0]), "label": service[1]},
+#         "position": {"x": 1600, "y": index*height},
+#         "type":"service",
+#         "classes":'service_normal'
+#     })
+#     element.append({
+#         "data":{
+#             "id":"relation_service_"+str(service[0])+"_to_service_category_"+str(service[4]),
+#             "source":'service_'+str(service[0]),
+#             "target":"service_category_"+str(service[4])
+#         },
+#         "type":"service_relation",
+#         "classes":"no-arrow"
+#     })
 
 
 # update function when new data
@@ -672,244 +669,279 @@ for index,service in enumerate(services):
 #         return (device_graph_list) + (service_graph_list) + relation,device_name,device_data,service_name,service_type
 #     return  element,device_name,device_data,service_name,service_type
 
-@callback(
-        Output('databank-graph', 'elements'),
-        # Output('device', 'options'),
-        # Output('device_data', 'options'),
-        # Output('service_name', 'options'),
-        # Output('service_type', 'options'),
-        Input('interval-component', 'n_intervals'),
-        Input('databank-graph', 'elements'),
-        prevent_initial_call=True,)
-def update_metrics(n,elements):
-    global trigger_web_hook,check_finish_load
-    if (trigger_web_hook==1 or len(elements)==0) and check_finish_load==0 :
-        print('update function')
-        check_finish_load=1
-        data = select_device()
-        element=list([])
-        height=800/len(data)
-        node_center = center_nodes(4,2*height,800)
-        # category
-        element.append({
-            "data": {"id": 'category_top_secret', "label": 'Top Secret'},
-            "position": {"x": 350, "y": node_center[3]},
-            "type":"category",
-            "classes":"device_category"
-        })
-        element.append({
-            "data": {"id": 'category_secret', "label": 'Secret'},
-            "position": {"x": 350, "y": node_center[2]},
-            "type":"category",
-            "classes":"device_category"
-        })
-        element.append({
-            "data":{
-                "id":"relation_category_top_secret_to_category_secret",
-                "source":'category_top_secret',
-                "target":'category_secret'
-            },
-            "type":"category_relation",
-            "classes":"device_relation"
-        })
-        element.append({
-            "data": {"id": 'category_private', "label": 'Private'},
-            "position": {"x": 350, "y": node_center[1]},
-            "type":"category",
-            "classes":"device_category"
-        })
-        element.append({
-            "data":{
-                "id":"relation_category_secret_to_category_private",
-                "source":'category_secret',
-                "target":'category_private'
-            },
-            "type":"category_relation",
-            "classes":"device_relation"
-        })
-        element.append({
-            "data": {"id": 'category_public', "label": 'Public'},
-            "position": {"x": 350, "y": node_center[0]},
-            "type":"category",
-            "classes":"device_category"
-        })
-        element.append({
-            "data":{
-                "id":"relation_category_private_to_category_public",
-                "source":'category_private',
-                "target":'category_public'
-            },
-            "type":"category_relation",
-            "classes":"device_relation"
-        })
-        device_data=select_device_data('all')
-        for index,device in enumerate(data):
-            # device
-            element.append({
-                "data": {"id": str(device[0]), "label": device[1]},
-                "position": {"x": 0, "y": index*height},
-                "type":"device",
-                "classes":'device_normal'
-            })
-            item= [item for i, item in enumerate(device_data) if str(item[1]) == str(device[0])][0]
-            # device data
-            element.append({
-                "data": {"id": 'data_'+str(item[0]), "label": item[3]},
-                "position": {"x": 150, "y": index*height},
-                "type":"device_data",
-                "classes":'device_data'
-            })
-            # device relationship
-            element.append({
-                "data":{
-                    "id":"relation_device_"+str(device[0])+"_data_"+str(item[0]),
-                    "source":str(device[0]),
-                    "target":'data_'+str(item[0])
-                },
-                "type":"device_relation",
-                "classes":"no-arrow"
-            })
-            # category relationship
-            element.append({
-                "data":{
-                    "id":"relation_data_"+str(item[0])+"_to_category_"+str(item[4]),
-                    "source":'data_'+str(item[0]),
-                    "target":'category_'+str(item[4]).replace(' ','_')
-                },
-                "type":"device_relation",
-                "classes":"no-arrow"
-            })
-        # cloud category
-        node_center = center_nodes(4,2*height,800)
-        cloud_category = select_cloud_category()
-        old_id = ""
-        for index,cloud in enumerate(cloud_category):
-            element.append({
-                "data": {"id": 'cloud_category_'+cloud[1].lower().replace(' ','_'), "label": cloud[1]},
-                "position": {"x": 700, "y": node_center[index]},
-                "type":"cloud_category",
-                "classes":"cloud_category"
-            })
-            if old_id !="":
-                element.append({
-                    "data":{
-                        "id":"relation_cloud_category_"+cloud[1].lower().replace(' ','_')+"_to_"+old_id,
-                        "source":'cloud_category_'+cloud[1].lower().replace(' ','_'),
-                        "target":old_id
-                    },
-                    "type":"cloud_category_relation",
-                    "classes":"device_relation"
-                })
-            old_id='cloud_category_'+cloud[1].lower().replace(' ','_')
-        element.append({
-            "data":{
-                "id":"relation_cloud_category_encypted_to_cloud_category_anolymise",
-                "source":'cloud_category_encypted',
-                "target":'cloud_category_anolymise'
-            },
-            "type":"cloud_category_relation",
-            "classes":"device_relation"
-        })
-        #action
-        actions = select_action()
-        node_center = center_nodes(len(actions)+1,2*height,800)
-        for index,action in enumerate(actions):
-            element.append({
-                "data": {"id": 'action_'+str(action[0]), "label": action[1]},
-                "position": {"x": 500, "y": node_center[index]},
-                "type":"device_data",
-                "classes":'device_action'
-            })
-            # action relationship
-            element.append({
-                "data":{
-                    "id":"relation_category_"+str(data[2]).replace(' ','_')+"_to_action_"+str(action[0]),
-                    "source":'category_'+str(action[2]).replace(' ','_'),
-                    "target":'action_'+str(action[0])
-                },
-                "type":"device_relation",
-                "classes":"device_relation"
-            })
-            #cloud category with action
-            cloud_with_action =select_action_with_clond_category(action[0])[0]
-            # action relationship with cloud category
-            element.append({
-                "data":{
-                    "id":"relation_action"+str(action[0])+"_to_cloud_category_"+cloud_with_action[3].lower().replace(' ','_'),
-                    "source":'action_'+str(action[0]),
-                    "target":"cloud_category_"+cloud_with_action[3].lower().replace(' ','_')
-                },
-                "type":"device_relation",
-                "classes":"device_relation"
-            })
+# @callback(
+#         Output('databank-graph', 'elements'),
+#         Input('interval-component', 'n_intervals'),
+#         Input('databank-graph', 'elements'),
+#         State('user-elements', 'data'),
+#         State('trigger', 'data'),
+#         prevent_initial_call=True,)
+# def update_metrics(n,elements,stored_elements,show_trigger):
+#     trigger = 0
+#     if show_trigger:
+#         trigger = 1
+#     if trigger==1:
+#         trigger=0
         
-        #service category
-        service_categories = select_service_category()
-        node_center = center_nodes(len(service_categories)+1,2*height,800)
-        for index,category in enumerate(service_categories):
-            element.append({
-                "data": {"id": 'service_category_'+str(category[0]), "label": category[1]},
-                "position": {"x": 1100, "y": node_center[index]},
-                "type":"service_category",
-                "classes":'service_category'
-            })
-        #service action
-        service_actions = select_service_action()
-        node_center = center_nodes(len(service_actions)+1,2*height,800)
-        for index,action in enumerate(service_actions):
-            element.append({
-                "data": {"id": 'service_action_'+str(action[0]), "label": action[3]},
-                "position": {"x": 900, "y": node_center[index]},
-                "type":"service_category",
-                "classes":'service_action'
-            })
-            element.append({
-                "data":{
-                    "id":"relation_service_action_"+str(action[0])+"_to_cloud_category_"+str(action[4]).lower().replace(' ','_'),
-                    "source":"service_action_"+str(action[0]),
-                    "target":"cloud_category_"+str(action[4]).lower().replace(' ','_')
-                },
-                "type":"service_relation",
-                "classes":"device_relation"
-            })
-            element.append({
-                "data":{
-                    "id":"relation_service_category_"+str(action[0])+"_to_service_action_"+str(action[0]),
-                    "source":'service_category_'+str(action[1]),
-                    "target":"service_action_"+str(action[0])
-                },
-                "type":"service_relation",
-                "classes":"device_relation"
-            })
-        #service
-        services = select_service()
-        height=800/len(services)
-        for index,service in enumerate(services):
-            element.append({
-                "data": {"id": 'service_'+str(service[0]), "label": service[1]},
-                "position": {"x": 1300, "y": index*height},
-                "type":"service",
-                "classes":'service_normal'
-            })
-            #service category relationship
-            category = select_service_category_by_service(service[0])
-            for index,cat in enumerate(category):
-                element.append({
-                    "data":{
-                        "id":"relation_service_"+str(service[0])+"_to_service_category_"+str(cat[0]),
-                        "source":'service_'+str(service[0]),
-                        "target":"service_category_"+str(cat[0])
-                    },
-                    "type":"service_relation",
-                    "classes":"device_relation"
-                })
-        trigger_web_hook=0
-        check_finish_load=0
-        return element
-    return elements
+#     return elements
+@app.callback(
+    Output('user-elements', 'data'),
+    Output('databank-graph', 'elements'),
+    Input('url', 'href')
+)
+def load_user_elements(href):
+    from urllib.parse import urlparse, parse_qs
+    query = parse_qs(urlparse(href).query)
+    user = query.get('user', ['guest'])[0]
+    print(href)
+    if user == 'guest':
+        return 1,[]
+    print('update function')
+    data = select_device(user)
+    element = []
+    device_y = center_nodes(len(data), 2 * 30, 800)  # spacing = 60, total height = 800
+    service_category_y = center_nodes(3, 2 * 60, 800)
+    # category
+    element.append({
+        "data": {"id": 'category_top_secret', "label": 'Top Secret'},
+        "position": {"x": 400, "y": service_category_y[2]+120},
+        "type": "category",
+        "classes": "device_category"
+    })
+    element.append({
+        "data": {"id": 'category_secret', "label": 'Secret'},
+        "position": {"x": 450, "y": service_category_y[2]},
+        "type": "category",
+        "classes": "device_category"
+    })
+    element.append({
+        "data": {
+            "id": "relation_category_secret_to_category_top_secret",
+            "source": 'category_secret',
+            "target": 'category_top_secret'
+        },
+        "type": "category_relation",
+        "classes": "device_relation"
+    })
+    element.append({
+        "data": {"id": 'category_private', "label": 'Private'},
+        "position": {"x": 500, "y": service_category_y[1]},
+        "type": "category",
+        "classes": "device_category"
+    })
+    element.append({
+        "data": {
+            "id": "relation_category_private_to_category_secret",
+            "source": 'category_private',
+            "target": 'category_secret'
+        },
+        "type": "category_relation",
+        "classes": "device_relation"
+    })
+    element.append({
+        "data": {"id": 'category_public', "label": 'Public'},
+        "position": {"x": 550, "y": service_category_y[0]},
+        "type": "category",
+        "classes": "device_category"
+    })
+    element.append({
+        "data": {
+            "id": "relation_category_public_to_category_private",
+            "source": 'category_public',
+            "target": 'category_private'
+        },
+        "type": "category_relation",
+        "classes": "device_relation"
+    })
 
+    # devices and data
+    device_data = select_device_data('all',user)
+    data_y = center_nodes(len(device_data), 2 * 30, 800)
+    key = 0
+    for index, device in enumerate(data):
+        element.append({
+            "data": {"id": str(device[0]), "label": device[1]},
+            "position": {"x": 0, "y": device_y[index]},
+            "type": "device",
+            "classes": 'device_normal'
+        })
+        items = [item for item in device_data if str(item[1]) == str(device[0])]
+        for item in items:
+            element.append({
+                "data": {"id": 'data_' + str(item[0]), "label": item[3] + ' data'},
+                "position": {"x": 200, "y": data_y[key]},
+                "type": "device_data",
+                "classes": 'device_data'
+            })
+            key = key+1
+            element.append({
+                "data": {
+                    "id": "relation_device_" + str(device[0]) + "_data_" + str(item[0]),
+                    "source": str(device[0]),
+                    "target": 'data_' + str(item[0])
+                },
+                "type": "device_relation",
+                "classes": "no-arrow"
+            })
+            element.append({
+                "data": {
+                    "id": "relation_data_" + str(item[0]) + "_to_category_" + str(item[4]).replace(' ', '_'),
+                    "source": 'data_' + str(item[0]),
+                    "target": 'category_' + str(item[4]).replace(' ', '_')
+                },
+                "type": "device_relation",
+                "classes": "no-arrow"
+            })
+
+    # cloud category
+    cloud_category = select_cloud_category()
+    cloud_y = center_nodes(len(cloud_category), 2 * 60, 800)
+    old_id = ""
+    for index, cloud in enumerate(cloud_category):
+        cloud_id = cloud[1].lower().replace(' ', '_')
+        element.append({
+            "data": {"id": 'cloud_category_' + cloud_id, "label": cloud[1]},
+            "position": {"x": 850, "y": cloud_y[index]},
+            "type": "cloud_category",
+            "classes": "cloud_category"
+        })
+        element.append({
+            "data": {"id": 'stored_' + cloud_id, "label": 'Stored ' + cloud[1].split(' ')[0]},
+            "position": {"x": 750, "y": cloud_y[index] - 30},
+            "type": "cloud_category",
+            "classes": "cloud_store"
+        })
+        element.append({
+            "data": {
+                "id": "relation_stored_" + cloud_id + "_to_cloud_category_" + cloud_id,
+                "source": 'stored_' + cloud_id,
+                "target": 'cloud_category_' + cloud_id
+            },
+            "type": "cloud_category_relation",
+            "classes": "no-arrow"
+        })
+        if old_id:
+            element.append({
+                "data": {
+                    "id": "relation_" + old_id + "_to_cloud_category_" + cloud_id,
+                    "source": old_id,
+                    "target": 'cloud_category_' + cloud_id
+                },
+                "type": "cloud_category_relation",
+                "classes": "no-arrow"
+            })
+        old_id = 'cloud_category_' + cloud_id
+
+    # actions
+    actions = select_action()
+    action_y = center_nodes(len(actions), 2 * 60, 800)
+    for index, action in enumerate(actions):
+        element.append({
+            "data": {"id": 'action_' + str(action[0]), "label": action[1]},
+            "position": {"x": 650, "y": action_y[index]},
+            "type": "device_data",
+            "classes": 'device_action'
+        })
+        element.append({
+            "data": {
+                "id": "relation_category_" + str(action[2]).replace(' ', '_') + "_to_action_" + str(action[0]),
+                "source": 'category_' + str(action[2]).replace(' ', '_'),
+                "target": 'action_' + str(action[0])
+            },
+            "type": "device_relation",
+            "classes": "no-arrow"
+        })
+        cloud_with_action = select_action_with_clond_category(action[0])[0]
+        element.append({
+            "data": {
+                "id": "relation_action" + str(action[0]) + "_to_cloud_category_" + cloud_with_action[3].lower().replace(' ', '_'),
+                "source": 'action_' + str(action[0]),
+                "target": "cloud_category_" + cloud_with_action[3].lower().replace(' ', '_')
+            },
+            "type": "device_relation",
+            "classes": "no-arrow"
+        })
+
+    # service categories and actions
+    service_categories = select_service_category()
+    service_cat_y = center_nodes(len(service_categories), 2 * 60, 800)
+    old_id = ""
+    for index, category in enumerate(service_categories):
+        element.append({
+            "data": {"id": 'service_category_' + str(category[0]), "label": category[1]},
+            "position": {"x": 1150 + (50 * index), "y": service_cat_y[index]},
+            "type": "service_category",
+            "classes": 'service_category'
+        })
+        if old_id:
+            element.append({
+                "data": {
+                    "id": "relation_" + old_id + "_to_service_category_" + str(category[0]),
+                    "source": 'service_category_' + str(category[0]),
+                    "target": old_id
+                },
+                "type": "cloud_category_relation",
+                "classes": "device_relation"
+            })
+        old_id = 'service_category_' + str(category[0])
+
+    # service actions
+    service_actions = select_service_action()
+    service_action_y = center_nodes(len(service_actions), 2 * 60, 800)
+    for index, action in enumerate(service_actions):
+        element.append({
+            "data": {"id": 'service_action_' + str(action[0]), "label": action[3]},
+            "position": {"x": 1000, "y": service_action_y[index]},
+            "type": "service_category",
+            "classes": 'service_action'
+        })
+        element.append({
+            "data": {
+                "id": "relation_service_action_" + str(action[0]) + "_to_cloud_category_" + str(action[4]).lower().replace(' ', '_'),
+                "source": "service_action_" + str(action[0]),
+                "target": "cloud_category_" + str(action[4]).lower().replace(' ', '_')
+            },
+            "type": "service_relation",
+            "classes": "no-arrow"
+        })
+        element.append({
+            "data": {
+                "id": "relation_service_category_" + str(action[0]) + "_to_service_action_" + str(action[0]),
+                "source": 'service_category_' + str(action[1]),
+                "target": "service_action_" + str(action[0])
+            },
+            "type": "service_relation",
+            "classes": "no-arrow"
+        })
+
+    # services
+    services = select_service(user)
+    service_y = center_nodes(len(services), 2 * 30, 800)
+    for index, service in enumerate(services):
+        element.append({
+            "data": {"id": 'service_' + str(service[0]), "label": service[1]},
+            "position": {"x": 1600, "y": service_y[index]},
+            "type": "service",
+            "classes": 'service_normal'
+        })
+        element.append({
+            "data": {
+                "id": "relation_service_" + str(service[0]) + "_to_service_category_" + str(service[5]),
+                "source": 'service_' + str(service[0]),
+                "target": "service_category_" + str(service[5])
+            },
+            "type": "service_relation",
+            "classes": "no-arrow"
+        })
+
+
+    return user,element
 app.layout = html.Div(
     [
+        dcc.Location(id='url', refresh=False),
+        # Store สำหรับเก็บ element ต่อผู้ใช้
+        dcc.Store(id='user-elements', storage_type='session'),
+        dcc.Store(id='trigger', storage_type='session'),
         # html.Link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"),
         # html.Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0/select2.min.css"),
         # html.Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-5-theme/1.4.0/select2-bootstrap.min.css"),
@@ -1004,11 +1036,11 @@ app.layout = html.Div(
             boxSelectionEnabled=True
         ),
         # element update graph
-        dcc.Interval(
-            id='interval-component',
-            interval=2*1000, 
-            n_intervals=0
-        ),
+        # dcc.Interval(
+        #     id='interval-component',
+        #     interval=2*1000, 
+        #     n_intervals=0
+        # ),
         # show mark
         html.Div(
             children=[
@@ -1031,7 +1063,7 @@ app.layout = html.Div(
                                     'borderRadius': '20px',
                                     'marginRight':'2px',
                                 }),
-                                html.Div("Device Data", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}), 
+                                html.Div("Unprocessed Data", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}), 
                                 html.Div("", style={
                                     'width': '24px',
                                     'height': '24px',
@@ -1039,7 +1071,7 @@ app.layout = html.Div(
                                     'borderRadius': '20px',
                                     'marginRight':'2px',
                                 }),
-                                html.Div("Category", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}),
+                                html.Div("Unprocessed Data Category", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}),
                                 html.Div("", style={
                                     'width': '24px',
                                     'height': '24px',
@@ -1047,7 +1079,7 @@ app.layout = html.Div(
                                     'borderRadius': '20px',
                                     'marginRight':'2px',
                                 }),
-                                html.Div("Action", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}),
+                                html.Div("Collection Action", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}),
                                 html.Div("", style={
                                     'width': '24px',
                                     'height': '24px',
@@ -1055,7 +1087,15 @@ app.layout = html.Div(
                                     'borderRadius': '20px',
                                     'marginRight':'2px',
                                 }),
-                                html.Div("Cloud Category", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}), 
+                                html.Div("Data Sharing Category", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}), 
+                                html.Div("", style={
+                                    'width': '24px',
+                                    'height': '24px',
+                                    'backgroundColor': '#836953',
+                                    'borderRadius': '20px',
+                                    'marginRight':'2px',
+                                }),
+                                html.Div("Stored Data", style={'width':'max-content','fontSize': 20, 'color': 'grey','marginRight':'5px'}), 
                                 html.Div("", style={
                                     'width': '24px',
                                     'height': '24px',
@@ -1229,8 +1269,10 @@ def display_hover_popup(tapNode,tapEdge,elements,selectedNodeData,selectedEdgeDa
         return "", {"position":"absolute","display": "none"},content, style,None,None
     return "", {"position":"absolute","display": "none"},"", {"position":"absolute","display": "none"},None,None
 
-
-
+# @server.route("/webhook", methods=['POST'])
+# def webhook():
+#     global trigger_web_hook
+#     trigger_web_hook=1
 # @server.route("/webhook", methods=['POST'])
 # def webhook():
 #     global trigger_web_hook
@@ -1246,5 +1288,5 @@ def display_hover_popup(tapNode,tapEdge,elements,selectedNodeData,selectedEdgeDa
 
 
 if __name__ == "__main__":
-    # app.run(port=5000,)  # type: ignore
-    app.run(debug=True)
+    app.run(port=5000,)  # type: ignore
+    # app.run(debug=True)

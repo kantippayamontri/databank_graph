@@ -9,14 +9,21 @@ from mysql.connector import pooling
 #     "database":"u146352233_databank",   # Replace with your database name
 #     "port":3306
 # }
-# localhost
 conn = {
-    "user":"root",  # Replace with your MySQL username
-    "password":"",  # Replace with your MySQL password
-    "host":"127.0.0.1",      # Replace with your MySQL host
+    "user":"culprit_lab",  # Replace with your MySQL username
+    "password":"-6?j2+M63h??",  # Replace with your MySQL password
+    "host":"147.79.70.44",      # Replace with your MySQL host
     "database":"databank",   # Replace with your database name
     "port":3306
 }
+# localhost
+# conn = {
+#     "user":"root",  # Replace with your MySQL username
+#     "password":"",  # Replace with your MySQL password
+#     "host":"127.0.0.1",      # Replace with your MySQL host
+#     "database":"databank",   # Replace with your database name
+#     "port":3306
+# }
 connection_pool = pooling.MySQLConnectionPool(pool_name="databank_pool", pool_size=20, **conn)
 def select_test():
   # Create a cursor object
@@ -33,12 +40,12 @@ def select_test():
   # Close connection
   cursor.close()
   conn.close()
-def select_device():
+def select_device(user_id):
   # Create a cursor object
   conn = connection_pool.get_connection()
   cursor = conn.cursor()
 
-  cursor.execute(f"SELECT * FROM devices")
+  cursor.execute(f"SELECT * FROM devices where user_id="+str(user_id))
 
   # Fetch data
   results = cursor.fetchall()
@@ -46,14 +53,14 @@ def select_device():
   cursor.close()
   conn.close()
   return results
-def select_device_data(id):
+def select_device_data(id,user):
   # Create a cursor object
   conn = connection_pool.get_connection()
   cursor = conn.cursor()
   if(id!= 'all'):
     cursor.execute(f"SELECT * FROM device_datas where device_id={id}")
   else:
-    cursor.execute(f"SELECT * FROM device_datas")
+    cursor.execute(f"SELECT * FROM device_datas left join devices on devices.id = device_datas.device_id where devices.user_id={str(user)}")
 
   # Fetch data
   results = cursor.fetchall()
@@ -89,11 +96,11 @@ def select_action_with_clond_category(id):
   conn.close()
   return results
 
-def select_service():
+def select_service(user_id):
   # Create a cursor object
   conn = connection_pool.get_connection()
   cursor = conn.cursor()
-  cursor.execute(f"SELECT * FROM services")
+  cursor.execute(f"SELECT services.*,service_category_connect.service_category_id FROM services join service_category_connect on service_category_connect.service_id=services.id where services.user_id="+str(user_id)+" order by service_category_connect.service_category_id ")
 
   # Fetch data
   results = cursor.fetchall()
